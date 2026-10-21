@@ -1,30 +1,11 @@
 #!/bin/sh
 # ----------------------------------------------------------------------------
-# Licensed to the Apache Software Foundation (ASF) under one
-# or more contributor license agreements.  See the NOTICE file
-# distributed with this work for additional information
-# regarding copyright ownership.  The ASF licenses this file
-# to you under the Apache License, Version 2.0 (the
-# "License"); you may not use this file except in compliance
-# with the License.  You may obtain a copy of the License at
-#
-#    https://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing,
-# software distributed under the License is distributed on an
-# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-# KIND, either express or implied.  See the License for the
-# specific language governing permissions and limitations
-# under the License.
-# ----------------------------------------------------------------------------
-
-# ----------------------------------------------------------------------------
-# Apache Maven Wrapper startup batch script, version 3.3.2
+# Apache Maven Wrapper startup script
 # ----------------------------------------------------------------------------
 
 set -e
 
-# Find the project base directory, from which this script is being run.
+# Find the project base directory
 find_maven_basedir() {
   basedir=$(dirname "$0")
   wdir="$basedir"
@@ -44,27 +25,46 @@ export MAVEN_PROJECTBASEDIR
 MAVEN_WRAPPER_PROPERTIES="$MAVEN_PROJECTBASEDIR/.mvn/wrapper/maven-wrapper.properties"
 
 if [ -r "$MAVEN_WRAPPER_PROPERTIES" ]; then
-  . "$MAVEN_WRAPPER_PROPERTIES"
+  distributionUrl=$(grep -E "^distributionUrl=" "$MAVEN_WRAPPER_PROPERTIES" | cut -d'=' -f2- | tr -d '\r')
 fi
 
-DISTRIBUTION_URL=${distributionUrl:-https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.9/apache-maven-3.9.9-bin.zip}
+DISTRIBUTION_URL=${distributionUrl:-https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.6/apache-maven-3.9.6-bin.zip}
 MAVEN_DIST_DIR="$HOME/.m2/wrapper/dists"
 DIST_FILENAME=$(basename "$DISTRIBUTION_URL")
 DIST_NAME="${DIST_FILENAME%.zip}"
-MAVEN_HOME="$MAVEN_DIST_DIR/$DIST_NAME"
+DIST_FOLDER="${DIST_NAME%-bin}"
+MAVEN_HOME="$MAVEN_DIST_DIR/$DIST_FOLDER"
 
 if [ ! -d "$MAVEN_HOME" ]; then
-  echo "Downloading Maven from $DISTRIBUTION_URL"
+  echo "Downloading Maven from $DISTRIBUTION_URL ..."
   mkdir -p "$MAVEN_DIST_DIR"
   TMP_DOWNLOAD_DIR=$(mktemp -d)
-  if command -v curl > /dev/null; then
-    curl -fLo "$TMP_DOWNLOAD_DIR/$DIST_FILENAME" "$DISTRIBUTION_URL"
-  else
-    wget -O "$TMP_DOWNLOAD_DIR/$DIST_FILENAME" "$DISTRIBUTION_URL"
+  if command -v curl > /dev/null 2>&1; then
+    curl -fsSL -o "$TMP_DOWNLOAD_DIR/$DIST_FILENAME" "$DISTRIBUTION_URL"
+  elif command -v wget > /dev/null 2>&1; then
+    wget -q -O "$TMP_DOWNLOAD_DIR/$DIST_FILENAME" "$DISTRIBUTION_URL"
   fi
-  unzip -q "$TMP_DOWNLOAD_DIR/$DIST_FILENAME" -d "$MAVEN_DIST_DIR"
+  unzip -q -o "$TMP_DOWNLOAD_DIR/$DIST_FILENAME" -d "$MAVEN_DIST_DIR"
   rm -rf "$TMP_DOWNLOAD_DIR"
 fi
 
-MAVEN_CMD="$MAVEN_HOME/bin/mvn"
-exec "$MAVEN_CMD" "$@"
+MAVEN_CMD=""
+if [ -x "$MAVEN_HOME/bin/mvn" ]; then
+  MAVEN_CMD="$MAVEN_HOME/bin/mvn"
+elif [ -x "$MAVEN_DIST_DIR/$DIST_NAME/bin/mvn" ]; then
+  MAVEN_CMD="$MAVEN_DIST_DIR/$DIST_NAME/bin/mvn"
+else
+  MAVEN_CMD=$(find "$MAVEN_DIST_DIR" -type f -name mvn 2>/dev/null | head -n 1)
+fi
+
+if [ -n "$MAVEN_CMD" ] && [ -f "$MAVEN_CMD" ]; then
+  chmod +x "$MAVEN_CMD"
+  exec "$MAVEN_CMD" "$@"
+fi
+
+if command -v mvn > /dev/null 2>&1; then
+  exec mvn "$@"
+fi
+
+echo "ERROR: Maven could not be found or executed." >&2
+exit 1

@@ -16,21 +16,6 @@ jobs:
     name: Build & Test (Java 21)
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: campus_pulse_test
-          POSTGRES_USER: campus_pulse
-          POSTGRES_PASSWORD: test_password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -43,20 +28,19 @@ jobs:
           cache: maven
           cache-dependency-path: backend/pom.xml
 
-      - name: Make mvnw executable
-        run: chmod +x backend/mvnw
+      - name: Prepare Maven wrapper
+        run: |
+          sed -i 's/\r$//' backend/mvnw
+          chmod +x backend/mvnw
 
-      - name: Build (skip tests for fast compile check)
+      - name: Build (compile check)
         run: ./mvnw package -DskipTests -B
         working-directory: backend
 
-      - name: Run tests
+      - name: Run tests (isolated H2)
         run: ./mvnw test -B
         working-directory: backend
         env:
-          DB_URL: jdbc:postgresql://localhost:5432/campus_pulse_test
-          DB_USERNAME: campus_pulse
-          DB_PASSWORD: test_password
           SPRING_PROFILES_ACTIVE: test
 
       - name: Upload test results
