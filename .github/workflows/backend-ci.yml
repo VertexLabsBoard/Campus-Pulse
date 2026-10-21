@@ -1,0 +1,89 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+
+jobs:
+  test:
+    name: Build & Test (Java 21)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: campus_pulse_test
+          POSTGRES_USER: campus_pulse
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      - name: Make mvnw executable
+        run: chmod +x backend/mvnw
+
+      - name: Build (skip tests for fast compile check)
+        run: ./mvnw package -DskipTests -B
+        working-directory: backend
+
+      - name: Run tests
+        run: ./mvnw test -B
+        working-directory: backend
+        env:
+          DB_URL: jdbc:postgresql://localhost:5432/campus_pulse_test
+          DB_USERNAME: campus_pulse
+          DB_PASSWORD: test_password
+          SPRING_PROFILES_ACTIVE: test
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: backend/target/surefire-reports/
+          retention-days: 7
+
+  docker-build:
+    name: Docker Build Check
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image (no push)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: false
+          tags: campus-pulse-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

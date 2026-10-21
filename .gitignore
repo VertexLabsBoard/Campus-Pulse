@@ -1,0 +1,54 @@
+# ─── General ─────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/settings.json
+*.iml
+
+# ─── Secrets & Credentials ───────────────────────────────────────────────────
+# NEVER commit .env files that contain real secrets
+.env
+.env.*
+*.env
+**/.env
+**/.env.*
+!**/.env.example
+cookies.txt
+*.key
+*.pem
+*.p12
+*.cer
+*.crt
+scratch/
+
+# ─── Backend (Java/Maven) ────────────────────────────────────────────────────
+backend/target/
+backend/data/
+*.mv.db
+*.lock.db
+backend/*.jar
+backend/*.war
+backend/.mvn/wrapper/maven-wrapper.jar  # downloaded at runtime
+!backend/.mvn/wrapper/maven-wrapper.properties
+
+# ─── Frontend (Node) ─────────────────────────────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.production
+
+# ─── Docker ──────────────────────────────────────────────────────────────────
+*.log
+
+# ─── Python (intelligence service) ──────────────────────────────────────────
+intelligence/__pycache__/
+intelligence/*.pyc
+intelligence/.venv/
+intelligence/venv/
+
+# ─── E2E tests ────────────────────────────────────────────────────────────────
+e2e/node_modules/
+e2e/playwright-report/
+e2e/test-results/

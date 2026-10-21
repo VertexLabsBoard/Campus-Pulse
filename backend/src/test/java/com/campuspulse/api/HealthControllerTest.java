@@ -1,0 +1,42 @@
+package com.campuspulse.api;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+
+import com.campuspulse.config.SecurityConfig;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+/**
+ * Tests for the /api/v1/health endpoint.
+ * Verifies: 200 status, body fields, and that the endpoint is accessible without authentication.
+ */
+@WebMvcTest(HealthController.class)
+@Import(SecurityConfig.class)
+@ActiveProfiles("test")
+class HealthControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Test
+    void health_returnsOk() throws Exception {
+        mockMvc.perform(get("/api/v1/health"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("UP"))
+            .andExpect(jsonPath("$.version").value("1.0.0"))
+            .andExpect(jsonPath("$.timestamp").isString());
+    }
+
+    @Test
+    void health_isPublic_noAuthRequired() throws Exception {
+        // No Authorization header — must still return 200
+        mockMvc.perform(get("/api/v1/health"))
+            .andExpect(status().isOk());
+    }
+}
