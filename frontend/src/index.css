@@ -1,4 +1,4 @@
-/* ─── Campus Pulse Academic Design System ────────────────────────────────── */
+/* ─── Campus Pulse Design System: Modern University Control Room ─────────── */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -6,138 +6,180 @@
 }
 
 :root {
-  /* Collegiate Brand Palette */
-  --navy-deep:        #080c14;
-  --navy-dark:        #0f172a;
-  --navy-card:        #15203b;
-  --navy-surface:     #1c294a;
-  --navy-border:      rgba(148, 163, 184, 0.16);
-  --navy-border-subtle: rgba(255, 255, 255, 0.07);
+  /* Institutional Core Palette */
+  --ink-primary:         #101827;
+  --navy-deep:           #0F1826;
+  --navy-header:         #17243A;
+  --navy-surface:        #1E2E4A;
+  --navy-border-subtle:  rgba(255, 255, 255, 0.08);
 
-  /* Academic Accents */
-  --gold-accent:      #f59e0b;
-  --gold-warm:        #fbbf24;
-  --gold-glow:        rgba(245, 158, 11, 0.2);
-  --oxford-blue:      #3b82f6;
-  --oxford-cyan:      #06b6d4;
+  /* Workspace Surfaces (Light Editorial Control Room) */
+  --bg-app:              #F5F6F8;
+  --surface-card:        #FFFFFF;
+  --surface-raised:      #FAFBFC;
+  --surface-sunken:      #EDEFF3;
+  --surface-hover:       #F1F3F7;
+
+  /* Typography Colors */
+  --text-primary:        #1A2434;
+  --text-secondary:      #5E6D82;
+  --text-muted:          #8A96A6;
+  --text-on-dark:        #F8FAFC;
+  --text-on-dark-muted:  #94A3B8;
+
+  /* Institutional Borders */
+  --border-subtle:       #E6E9EF;
+  --border-base:         #DCE1E8;
+  --border-strong:       #CAD2DC;
+  --border-active:       #B2BED0;
+
+  /* Signature Collegiate Gold */
+  --gold-primary:        #DDAA35;
+  --gold-hover:          #C58B17;
+  --gold-deep:           #9E6C0C;
+  --gold-tint:           rgba(221, 170, 53, 0.12);
+  --gold-tint-strong:    rgba(221, 170, 53, 0.22);
+  --gold-glow:           rgba(221, 170, 53, 0.18);
 
   /* Semantic State Colors */
-  --crimson-hazard:   #ef4444;
-  --crimson-bg:       rgba(239, 68, 68, 0.12);
-  --emerald-fixed:    #10b981;
-  --emerald-bg:       rgba(16, 185, 129, 0.12);
-  --amber-warn:       #f59e0b;
-  --amber-bg:         rgba(245, 158, 11, 0.12);
-  --purple-reopen:    #a855f7;
+  --success:             #248568;
+  --success-bg:          #E8F6F1;
+  --success-border:      #A9DFCE;
+
+  --warning:             #C58A28;
+  --warning-bg:          #FEF7EC;
+  --warning-border:      #F7D8A1;
+
+  --critical:            #C84A4A;
+  --critical-bg:         #FDEEEE;
+  --critical-border:     #F4AEAE;
+
+  --info-sapphire:       #2A6FBE;
+  --info-bg:             #EDF5FD;
+  --info-border:         #B6D7FA;
 
   /* Typography */
-  --font-serif:       'Newsreader', Georgia, serif;
-  --font-display:     'Cinzel', 'Newsreader', Georgia, serif;
-  --font-sans:        'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono:        'JetBrains Mono', monospace;
+  --font-serif:          'Newsreader', Georgia, serif;
+  --font-display:        'Cinzel', 'Newsreader', Georgia, serif;
+  --font-sans:           'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono:           'JetBrains Mono', 'SF Mono', Consolas, monospace;
 
-  /* Typography scale */
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-3xl: 2rem;
+  /* Type Scale */
+  --text-xs:             0.75rem;
+  --text-sm:             0.84rem;
+  --text-base:           0.9375rem;
+  --text-md:             1.025rem;
+  --text-lg:             1.125rem;
+  --text-xl:             1.25rem;
+  --text-2xl:            1.5rem;
+  --text-3xl:            1.875rem;
 
-  /* Spacing */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
+  /* Spacing Scale */
+  --space-1:             4px;
+  --space-2:             8px;
+  --space-3:             12px;
+  --space-4:             16px;
+  --space-5:             20px;
+  --space-6:             24px;
+  --space-8:             32px;
+  --space-10:            40px;
 
-  /* Radius */
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-full: 9999px;
+  /* Border Radii */
+  --radius-xs:           4px;
+  --radius-sm:           6px;
+  --radius-md:           10px;
+  --radius-lg:           14px;
+  --radius-xl:           18px;
+  --radius-full:         9999px;
 
-  /* Grid & Pattern */
-  --grid-line: rgba(255, 255, 255, 0.04);
+  /* Shadows */
+  --shadow-subtle:       0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-card:         0 1px 3px rgba(16, 24, 40, 0.06), 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-card-hover:   0 6px 18px -4px rgba(16, 24, 40, 0.09), 0 2px 6px -2px rgba(16, 24, 40, 0.05);
+  --shadow-dropdown:     0 12px 28px -4px rgba(16, 24, 40, 0.16), 0 4px 10px -2px rgba(16, 24, 40, 0.08);
+  --shadow-modal:        0 24px 48px -12px rgba(16, 24, 40, 0.28), 0 8px 16px -4px rgba(16, 24, 40, 0.12);
 }
 
 html, body {
   min-height: 100vh;
-  background-color: var(--navy-deep);
-  color: #f1f5f9;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: 15px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Subtle Campus Blueprint / Graph-Paper Grid Background */
+/* Subtle Institutional Warm Blueprint / Paper Texture */
 body {
-  background-image: 
-    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px),
-    radial-gradient(ellipse at 50% 0%, rgba(30, 58, 138, 0.18) 0%, transparent 60%);
-  background-size: 28px 28px, 28px 28px, 100% 100%;
+  background-image:
+    radial-gradient(ellipse at 50% 0%, rgba(23, 36, 58, 0.035) 0%, transparent 60%),
+    linear-gradient(to right, rgba(200, 206, 216, 0.18) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(200, 206, 216, 0.18) 1px, transparent 1px);
+  background-size: 100% 100%, 32px 32px, 32px 32px;
   background-attachment: fixed;
 }
 
-/* Custom Scrollbar */
+/* Custom Refined Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--navy-deep);
+  background: var(--bg-app);
 }
 ::-webkit-scrollbar-thumb {
-  background: #253354;
+  background: #C4CCD8;
   border-radius: var(--radius-full);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3b4e78;
+  background: #A6B2C2;
 }
 
-/* Interactive elements */
+/* Base button, input resets */
 button {
   font-family: var(--font-sans);
   cursor: pointer;
   border: none;
   outline: none;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--gold-primary);
+  outline-offset: 1px;
 }
 
 input, select, textarea {
   font-family: var(--font-sans);
   outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
-/* Utility Animations */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes pulseGlow {
-  0%, 100% { opacity: 0.9; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(1.15); }
-}
-
-@keyframes scanLine {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100%); }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
-}
-
+/* Utilities */
 .ticket-number {
   font-family: var(--font-mono);
   font-weight: 600;
   letter-spacing: 0.05em;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
