@@ -20,6 +20,8 @@ export function App() {
   const [activeTab, setActiveTab] = useState<'hub' | 'report' | 'feed' | 'queue' | 'admin'>('feed');
   const [issues, setIssues] = useState<IssueItem[]>([]);
   const [locations, setLocations] = useState<LocationItem[]>([]);
+  const [locationsLoading, setLocationsLoading] = useState(true);
+  const [locationsError, setLocationsError] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<LocationItem | null>(null);
   const [locationActiveIssues, setLocationActiveIssues] = useState<IssueItem[]>([]);
   const [selectedIssue, setSelectedIssue] = useState<IssueItem | null>(null);
@@ -150,6 +152,10 @@ export function App() {
         if (found) {
           scanQrLocation(found.qrToken);
           setActiveTab('hub');
+        } else {
+          setReportLocId('');
+          setActiveTab('report');
+          showToast('This QR code is not linked to a campus location. Please choose a registered location.');
         }
       }
     }
@@ -479,16 +485,22 @@ export function App() {
   // Load Data
   async function loadLocations() {
     try {
+      setLocationsLoading(true);
       const res = await fetch('/api/v1/locations', { credentials: 'include' });
-      if (res.ok) {
-        const data = await res.json();
-        setLocations(data);
-        if (data.length > 0 && !reportLocId) {
-          setReportLocId(data[0].id);
-        }
+      if (!res.ok) {
+        throw new Error('The campus location directory could not be loaded.');
+      }
+      const data = await res.json();
+      setLocations(data);
+      setLocationsError(null);
+      if (data.length > 0 && !reportLocId) {
+        setReportLocId(data[0].id);
       }
     } catch (e) {
       console.error(e);
+      setLocationsError('Could not load the campus location directory.');
+    } finally {
+      setLocationsLoading(false);
     }
   }
 
@@ -803,6 +815,9 @@ export function App() {
           {activeTab === 'report' && (
             <ReportIssue
               locations={locations}
+              locationsLoading={locationsLoading}
+              locationsError={locationsError}
+              onRetryLocations={loadLocations}
               issues={issues}
               reportLocId={reportLocId}
               setReportLocId={setReportLocId}

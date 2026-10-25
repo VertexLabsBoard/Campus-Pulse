@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Check, X, ArrowRight, Play, CheckCircle2, MapPin, Search } from 'lucide-react';
+import { Check, X, ArrowRight, ArrowUpRight, Play, CheckCircle2, MapPin, Search } from 'lucide-react';
 import type { IssueItem, User } from '../types';
 
 interface StaffQueueProps {
@@ -172,7 +172,7 @@ export function StaffQueue({
                         className="queue-action-btn"
                         onClick={() => onSelectIssue(job)}
                       >
-                        Dossier →
+                        Dossier <ArrowUpRight size={13} />
                       </button>
                     </div>
                   </td>

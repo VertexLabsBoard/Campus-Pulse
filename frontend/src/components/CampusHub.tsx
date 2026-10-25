@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { QrCode, Printer, AlertTriangle, Send, ThumbsUp, CheckCircle2, Search, Filter } from 'lucide-react';
+import { QrCode, Printer, AlertTriangle, Send, ThumbsUp, CheckCircle2, Search, Filter, ArrowUpRight } from 'lucide-react';
 import type { LocationItem, IssueItem } from '../types';
 
 interface CampusHubProps {
@@ -191,7 +191,7 @@ export function CampusHub({
                           >
                             <ThumbsUp size={11} /> +{issue.supporterCount}
                           </button>
-                          <span style={{ fontSize: '0.72rem', color: '#68758A' }}>Click to view dossier →</span>
+                          <span style={{ fontSize: '0.72rem', color: '#68758A', display: 'inline-flex', alignItems: 'center', gap: 3 }}>View dossier <ArrowUpRight size={13} /></span>
                         </div>
                       </div>
                     ))}

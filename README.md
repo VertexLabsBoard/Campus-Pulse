@@ -29,7 +29,7 @@
 
 ```
 Campus Pulse/
-├── backend/                   ← Spring Boot 3 (Java 21) REST API
+├── backend/                   ← Spring Boot 3 (Java 25) REST API
 │   ├── src/main/java/         ← Controllers, Services, Entities, Security
 │   ├── src/main/resources/    ← Config & Flyway Database Migrations (V1–V7)
 │   ├── .env.example           ← Environment variable template
@@ -69,7 +69,7 @@ Campus Pulse/
 ## 📋 Prerequisites
 
 Make sure you have the following installed:
-- **Java JDK 21+** ([Eclipse Temurin](https://adoptium.net/) or OpenJDK)
+- **Java JDK 25** ([Eclipse Temurin](https://adoptium.net/) or OpenJDK)
 - **Node.js 18+** ([NodeJS.org](https://nodejs.org/))
 - **Git**
 

@@ -1,4 +1,4 @@
-import { Shield, Compass, Send, Layers, Wrench, BarChart3, PhoneCall, UserCircle2, ChevronDown } from 'lucide-react';
+import { Compass, Send, ClipboardList, Wrench, BarChart3, PhoneCall, UserCircle2, ChevronDown } from 'lucide-react';
 import type { User, IssueItem } from '../types';
 
 interface SidebarProps {
@@ -26,12 +26,12 @@ export function Sidebar({
     <aside className={`app-sidebar ${isOpen ? 'open' : ''}`} aria-label="Main sidebar navigation">
       {/* Brand Header */}
       <div className="sidebar-brand" onClick={() => setActiveTab('feed')} role="button" tabIndex={0}>
-        <div className="sidebar-brand-shield">
-          <Shield size={20} />
+        <div className="sidebar-brand-mark" aria-hidden="true">
+          <img src="/campus-pulse-logo.png" alt="" />
         </div>
         <div>
           <span className="sidebar-brand-title">Campus Pulse</span>
-          <span className="sidebar-brand-sub">Amity Operations</span>
+          <span className="sidebar-brand-sub">Campus Operations</span>
         </div>
       </div>
 
@@ -44,7 +44,7 @@ export function Sidebar({
           className={`sidebar-nav-item ${activeTab === 'feed' ? 'active' : ''}`}
           onClick={() => setActiveTab('feed')}
         >
-          <Layers size={17} />
+          <ClipboardList size={17} />
           <span className="sidebar-nav-label">Issue Register</span>
           <span className="sidebar-nav-counter">{issues.length}</span>
         </button>
@@ -107,10 +107,10 @@ export function Sidebar({
             onChange={(e) => onSwitchPersona(e.target.value)}
             aria-label="Select user persona"
           >
-            <option value="arjun.sharma@s.amity.edu">🎓 Arjun Sharma (Student)</option>
-            <option value="priya.patel@amity.edu">💻 Priya Patel (IT Staff)</option>
-            <option value="ramesh.kumar@amity.edu">🔧 Ramesh Kumar (Facilities)</option>
-            <option value="dr.vikram.sen@amity.edu">🏛️ Dr. Vikram Sen (Dean)</option>
+            <option value="arjun.sharma@s.amity.edu">Arjun Sharma (Student)</option>
+            <option value="priya.patel@amity.edu">Priya Patel (IT Staff)</option>
+            <option value="ramesh.kumar@amity.edu">Ramesh Kumar (Facilities)</option>
+            <option value="dr.vikram.sen@amity.edu">Dr. Vikram Sen (Dean)</option>
           </select>
           <ChevronDown size={14} className="sidebar-persona-chevron" />
         </div>

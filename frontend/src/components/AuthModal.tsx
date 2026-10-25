@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { Shield, X, AlertTriangle, CheckCircle2, School, Search, Check, LogOut, Sparkles } from 'lucide-react';
+import { X, AlertTriangle, CheckCircle2, School, Search, Check, LogOut, Sparkles, KeyRound, ClipboardPenLine, Zap, GraduationCap, BriefcaseBusiness, Monitor, Wrench, Landmark, ArrowRight, ArrowLeft } from 'lucide-react';
 import { AMITY_CAMPUSES, type AmityCourse } from '../data/amityCourses';
 import type { User, DepartmentItem } from '../types';
 
@@ -150,27 +150,15 @@ export function AuthModal({
             <X size={20} />
           </button>
 
-          <div style={{
-            width: 44,
-            height: 44,
-            borderRadius: 'var(--radius-sm)',
-            background: 'linear-gradient(135deg, #1E2E4A 0%, #0F1826 100%)',
-            border: '1.5px solid var(--gold-primary)',
-            margin: '0 auto 10px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--gold-primary)',
-            boxShadow: '0 0 16px var(--gold-glow)'
-          }}>
-            <Shield size={22} />
+          <div className="auth-brand-mark" aria-hidden="true">
+            <img src="/campus-pulse-logo.png" alt="" />
           </div>
 
-          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.35rem', color: '#FFFFFF', letterSpacing: '0.04em', fontWeight: 700 }}>
-            Amity University Dispatch Portal
+          <h3 className="auth-modal-title">
+            Campus Pulse
           </h3>
-          <p style={{ color: '#9FB0C7', fontSize: '0.8rem', marginTop: 3 }}>
-            Official Institutional Verification & Identity Service
+          <p className="auth-modal-subtitle">
+            Secure campus access and identity verification
           </p>
         </div>
 
@@ -188,7 +176,7 @@ export function AuthModal({
                 setAuthSuccess(null);
               }}
             >
-              🔑 Sign In (OTP)
+              <KeyRound size={16} /> Sign In (OTP)
             </button>
             <button
               type="button"
@@ -200,7 +188,7 @@ export function AuthModal({
                 setAuthSuccess(null);
               }}
             >
-              📝 Amity Registration
+              <ClipboardPenLine size={16} /> Registration
             </button>
             <button
               type="button"
@@ -211,7 +199,7 @@ export function AuthModal({
                 setAuthSuccess(null);
               }}
             >
-              ⚡ Fast-Pass
+              <Zap size={16} /> Fast-Pass
             </button>
           </div>
 
@@ -245,7 +233,7 @@ export function AuthModal({
                         className={`role-card-btn ${signupRole === 'STUDENT' ? 'active' : ''}`}
                         onClick={() => { setSignupRole('STUDENT'); setAuthError(null); }}
                       >
-                        <span className="role-card-title">🎓 Student</span>
+                        <span className="role-card-title"><GraduationCap size={17} /> Student</span>
                         <span className="role-card-domain">@s.amity.edu domain</span>
                       </button>
 
@@ -254,7 +242,7 @@ export function AuthModal({
                         className={`role-card-btn ${signupRole === 'STAFF' ? 'active' : ''}`}
                         onClick={() => { setSignupRole('STAFF'); setAuthError(null); }}
                       >
-                        <span className="role-card-title">👔 Faculty / Staff</span>
+                        <span className="role-card-title"><BriefcaseBusiness size={17} /> Faculty / Staff</span>
                         <span className="role-card-domain">@amity.edu domain</span>
                       </button>
                     </div>
@@ -327,13 +315,13 @@ export function AuthModal({
                       required
                     />
                     {signupRole === 'STUDENT' && signupEmail && !signupEmail.toLowerCase().endsWith('@s.amity.edu') && (
-                      <span style={{ fontSize: '0.74rem', color: '#CF1322', marginTop: 4, display: 'block', fontWeight: 600 }}>
-                        ⚠️ Student emails must strictly end with @s.amity.edu
+                      <span className="auth-field-alert">
+                        <AlertTriangle size={14} /> Student emails must strictly end with @s.amity.edu
                       </span>
                     )}
                     {signupRole === 'STAFF' && signupEmail && (!signupEmail.toLowerCase().endsWith('@amity.edu') || signupEmail.toLowerCase().endsWith('@s.amity.edu')) && (
-                      <span style={{ fontSize: '0.74rem', color: '#CF1322', marginTop: 4, display: 'block', fontWeight: 600 }}>
-                        ⚠️ Faculty/Staff emails must end with @amity.edu (not @s.amity.edu)
+                      <span className="auth-field-alert">
+                        <AlertTriangle size={14} /> Faculty/Staff emails must end with @amity.edu (not @s.amity.edu)
                       </span>
                     )}
                   </div>
@@ -413,8 +401,8 @@ export function AuthModal({
                                     <div className="course-dropdown-name">{c.name}</div>
                                     <div className="course-dropdown-meta">
                                       <span>Duration: {c.durationYears} Years</span>
-                                      <span style={{ color: isOfferedAtCampus ? 'var(--success)' : '#CF1322', fontWeight: 600 }}>
-                                        {isOfferedAtCampus ? `✓ Offered at ${signupCampus}` : `✗ Not at ${signupCampus}`}
+                                      <span className="course-availability" style={{ color: isOfferedAtCampus ? 'var(--success)' : '#CF1322' }}>
+                                        {isOfferedAtCampus ? <CheckCircle2 size={13} /> : <X size={13} />} {isOfferedAtCampus ? `Offered at ${signupCampus}` : `Not at ${signupCampus}`}
                                       </span>
                                     </div>
                                   </li>
@@ -440,7 +428,7 @@ export function AuthModal({
                           </div>
                         ) : (
                           <span style={{ fontSize: '0.72rem', color: 'var(--warning)', marginTop: 4, display: 'block' }}>
-                            ⚠️ Please click a course from the search list to select it.
+                            <AlertTriangle size={14} /> Please click a course from the search list to select it.
                           </span>
                         )}
 
@@ -529,7 +517,7 @@ export function AuthModal({
                                     marginTop: 4
                                   }}
                                 >
-                                  Auto-align End Year to {startYear + Math.max(1, Math.round(selectedCourse.durationYears))} ✓
+                                  <Check size={14} /> Auto-align End Year to {startYear + Math.max(1, Math.round(selectedCourse.durationYears))}
                                 </button>
                               </p>
                             </div>
@@ -562,7 +550,7 @@ export function AuthModal({
                     disabled={authLoading || (signupRole === 'STUDENT' && (!selectedCourse || !isCampusValid || !isDurationValid))}
                     style={{ marginTop: 8, padding: 13, justifyContent: 'center' }}
                   >
-                    {authLoading ? 'Generating Security OTP...' : 'Send 6-Digit OTP to Amity Email →'}
+                    {authLoading ? 'Generating Security OTP...' : <>Send 6-Digit OTP to Amity Email <ArrowRight size={16} /></>}
                   </button>
                 </form>
               ) : (
@@ -580,7 +568,7 @@ export function AuthModal({
                   {/* Dev Testing OTP Pill */}
                   {activeDevOtp && (
                     <div className="dev-otp-pill">
-                      <span>⚡ Dev Testing Passcode: <strong>{activeDevOtp}</strong></span>
+                      <span><Zap size={14} /> Dev Testing Passcode: <strong>{activeDevOtp}</strong></span>
                       <button
                         type="button"
                         onClick={() => setOtpInput(activeDevOtp)}
@@ -641,7 +629,7 @@ export function AuthModal({
                     disabled={authLoading || otpInput.length !== 6}
                     style={{ padding: 13, justifyContent: 'center' }}
                   >
-                    {authLoading ? 'Verifying...' : 'Verify OTP & Complete Registration ✓'}
+                    {authLoading ? 'Verifying...' : <><CheckCircle2 size={16} /> Verify OTP & Complete Registration</>}
                   </button>
 
                   <button
@@ -650,7 +638,7 @@ export function AuthModal({
                     className="btn-secondary"
                     style={{ justifyContent: 'center' }}
                   >
-                    ← Edit Registration Details
+                    <ArrowLeft size={16} /> Edit Registration Details
                   </button>
                 </form>
               )}
@@ -686,7 +674,7 @@ export function AuthModal({
                     disabled={authLoading}
                     style={{ padding: 13, justifyContent: 'center' }}
                   >
-                    {authLoading ? 'Sending Sign-in Passcode...' : 'Send Sign-in Code →'}
+                    {authLoading ? 'Sending Sign-in Passcode...' : <>Send Sign-in Code <ArrowRight size={16} /></>}
                   </button>
 
                   <div style={{ textAlign: 'center', fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: 4 }}>
@@ -714,7 +702,7 @@ export function AuthModal({
 
                   {activeDevOtp && (
                     <div className="dev-otp-pill">
-                      <span>⚡ Dev Testing Passcode: <strong>{activeDevOtp}</strong></span>
+                      <span><Zap size={14} /> Dev Testing Passcode: <strong>{activeDevOtp}</strong></span>
                       <button
                         type="button"
                         onClick={() => setOtpInput(activeDevOtp)}
@@ -774,7 +762,7 @@ export function AuthModal({
                     disabled={authLoading || otpInput.length !== 6}
                     style={{ padding: 13, justifyContent: 'center' }}
                   >
-                    {authLoading ? 'Verifying...' : 'Verify & Sign In ✓'}
+                    {authLoading ? 'Verifying...' : <><CheckCircle2 size={16} /> Verify & Sign In</>}
                   </button>
 
                   <button
@@ -783,7 +771,7 @@ export function AuthModal({
                     className="btn-secondary"
                     style={{ justifyContent: 'center' }}
                   >
-                    ← Change Email
+                    <ArrowLeft size={16} /> Change Email
                   </button>
                 </form>
               )}
@@ -815,7 +803,7 @@ export function AuthModal({
                   className="persona-fastpass-card"
                   onClick={() => { onSwitchPersona('arjun.sharma@s.amity.edu'); onClose(); }}
                 >
-                  <strong>🎓 Arjun Sharma</strong>
+                  <strong><GraduationCap size={17} /> Arjun Sharma</strong>
                   <span>Student • A230522001</span>
                   <span style={{ color: 'var(--gold-deep)', fontSize: '0.72rem', fontWeight: 600 }}>B.Tech CSE (2023-2027)</span>
                 </div>
@@ -824,7 +812,7 @@ export function AuthModal({
                   className="persona-fastpass-card"
                   onClick={() => { onSwitchPersona('priya.patel@amity.edu'); onClose(); }}
                 >
-                  <strong>💻 Priya Patel</strong>
+                  <strong><Monitor size={17} /> Priya Patel</strong>
                   <span>Staff • IT & Lab Specialist</span>
                   <span style={{ color: 'var(--info-sapphire)', fontSize: '0.72rem' }}>priya.patel@amity.edu</span>
                 </div>
@@ -833,7 +821,7 @@ export function AuthModal({
                   className="persona-fastpass-card"
                   onClick={() => { onSwitchPersona('ramesh.kumar@amity.edu'); onClose(); }}
                 >
-                  <strong>🔧 Ramesh Kumar</strong>
+                  <strong><Wrench size={17} /> Ramesh Kumar</strong>
                   <span>Staff • Facilities Maintenance</span>
                   <span style={{ color: 'var(--info-sapphire)', fontSize: '0.72rem' }}>ramesh.kumar@amity.edu</span>
                 </div>
@@ -842,7 +830,7 @@ export function AuthModal({
                   className="persona-fastpass-card"
                   onClick={() => { onSwitchPersona('dr.vikram.sen@amity.edu'); onClose(); }}
                 >
-                  <strong>🏛️ Dr. Vikram Sen</strong>
+                  <strong><Landmark size={17} /> Dr. Vikram Sen</strong>
                   <span>Dean • Operations & Admin</span>
                   <span style={{ color: '#7E22CE', fontSize: '0.72rem' }}>dr.vikram.sen@amity.edu</span>
                 </div>

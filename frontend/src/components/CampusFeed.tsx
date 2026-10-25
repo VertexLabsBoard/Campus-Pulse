@@ -135,16 +135,26 @@ export function CampusFeed({
       ) : (
         <div className="register-table-wrapper">
           <table className="register-table">
+            <colgroup>
+              <col className="register-col-ticket" />
+              <col className="register-col-status" />
+              <col className="register-col-priority" />
+              <col className="register-col-location" />
+              <col className="register-col-description" />
+              <col className="register-col-support" />
+              <col className="register-col-time" />
+              <col className="register-col-action" />
+            </colgroup>
             <thead>
               <tr>
-                <th style={{ width: 130 }}>Ticket</th>
-                <th style={{ width: 110 }}>Status</th>
-                <th style={{ width: 110 }}>Priority</th>
-                <th style={{ width: 140 }}>Location</th>
+                <th>Ticket</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Location</th>
                 <th>Issue Description</th>
-                <th style={{ width: 130 }}>Support</th>
-                <th style={{ width: 90 }}>Logged</th>
-                <th style={{ width: 50 }}></th>
+                <th>Support</th>
+                <th className="register-time-column">Logged</th>
+                <th className="register-action-column" aria-label="View details"></th>
               </tr>
             </thead>
             <tbody>
@@ -172,19 +182,19 @@ export function CampusFeed({
                     <td>
                       <div className="register-loc-cell">
                         <MapPin size={12} color="var(--gold-hover)" />
-                        <span className="register-room-code">{issue.roomCode}</span>
-                        <span className="register-room-sub">{issue.category}</span>
+                        <span className="register-room-code" title={issue.roomCode}>{issue.roomCode}</span>
+                        <span className="register-room-sub" title={issue.category}>{issue.category}</span>
                       </div>
                     </td>
                     <td>
                       <div className="register-desc-cell">
-                        <span className="register-desc-text">{issue.description}</span>
+                        <span className="register-desc-text" title={issue.description}>{issue.description}</span>
                         {issue.departmentName && (
                           <span className="register-dept-tag">{issue.departmentName}</span>
                         )}
                       </div>
                     </td>
-                    <td>
+                    <td className="register-time-column">
                       <button
                         type="button"
                         className={`support-btn ${issue.userHasSupported ? 'supported' : ''}`}
@@ -201,7 +211,7 @@ export function CampusFeed({
                         {new Date(issue.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </td>
-                    <td style={{ textAlign: 'right' }}>
+                    <td className="register-action-column">
                       <ArrowUpRight size={15} className="register-inspect-icon" />
                     </td>
                   </tr>
@@ -209,6 +219,39 @@ export function CampusFeed({
               })}
             </tbody>
           </table>
+
+          <div className="register-mobile-list">
+            {filteredIssues.map((issue) => (
+              <article
+                key={issue.id}
+                className={`register-mobile-card ${issue.priorityLevel === 'CRITICAL' ? 'critical-row' : ''}`}
+                onClick={() => onSelectIssue(issue)}
+              >
+                <div className="register-mobile-card-top">
+                  <span className="register-ticket-code">{issue.ticketNo}</span>
+                  <span className={`status-badge status-${issue.status}`}>{issue.status}</span>
+                </div>
+                <p className="register-mobile-description" title={issue.description}>{issue.description}</p>
+                <div className="register-mobile-location">
+                  <MapPin size={14} />
+                  <strong title={issue.roomCode}>{issue.roomCode}</strong>
+                  <span title={issue.category}>{issue.category}</span>
+                </div>
+                <div className="register-mobile-card-bottom">
+                  <span className={`priority-pill priority-${issue.priorityLevel}`}>{issue.priorityLevel}</span>
+                  <button
+                    type="button"
+                    className={`support-btn ${issue.userHasSupported ? 'supported' : ''}`}
+                    onClick={(e) => onToggleSupport(issue.id, e)}
+                    title="Mark affected"
+                  >
+                    <ThumbsUp size={12} /> <span>+{issue.supporterCount}</span>
+                  </button>
+                  <span className="register-time-text">{new Date(issue.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       )}
     </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, MapPin, CheckCircle2, Star, Send, ShieldAlert, User, Tag, Building, AlertCircle } from 'lucide-react';
+import { X, MapPin, CheckCircle2, Star, Send, ShieldAlert, User, Tag, Building, AlertCircle, Circle, RotateCcw } from 'lucide-react';
 import type { IssueItem, User as CurrentUser } from '../types';
 
 interface IssueDetailModalProps {
@@ -72,7 +72,7 @@ export function IssueDetailModal({
                 borderRadius: 4,
                 fontFamily: 'var(--font-mono)'
               }}>
-                🚨 SAFETY FLAG OVERRIDE
+                <ShieldAlert size={13} /> SAFETY FLAG OVERRIDE
               </span>
             )}
           </div>
@@ -176,7 +176,7 @@ export function IssueDetailModal({
               <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 5, fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
                 {selectedIssue.priorityExplanation.reasons?.map((r, idx) => (
                   <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                    <span style={{ color: 'var(--gold-primary)', fontWeight: 700 }}>•</span>
+                    <Circle size={7} fill="currentColor" style={{ color: 'var(--gold-primary)', marginTop: 5, flexShrink: 0 }} />
                     <span>{r}</span>
                   </li>
                 ))}
@@ -288,7 +288,7 @@ export function IssueDetailModal({
                   style={{ background: '#16A34A', border: '1px solid #15803D', flex: '1 1 200px' }}
                   onClick={() => onConfirmResolution(selectedIssue.id, true, feedbackRating, feedbackComment)}
                 >
-                  ✓ Yes, It's Fixed (Close Ticket)
+                  <CheckCircle2 size={16} /> Yes, It&apos;s Fixed (Close Ticket)
                 </button>
 
                 <button
@@ -297,7 +297,7 @@ export function IssueDetailModal({
                   style={{ color: '#CF1322', borderColor: '#FFCCC7', background: '#FFF1F0', flex: '1 1 200px' }}
                   onClick={() => onConfirmResolution(selectedIssue.id, false, feedbackRating, feedbackComment)}
                 >
-                  ✕ Still Broken (Reopen Ticket)
+                  <RotateCcw size={16} /> Still Broken (Reopen Ticket)
                 </button>
               </div>
             </div>
@@ -403,7 +403,7 @@ export function IssueDetailModal({
                   }}
                   title="Toggle Staff Internal Note"
                 >
-                  Internal Note {isInternalComment ? '✓' : ''}
+                  <ShieldAlert size={14} /> Internal Note {isInternalComment ? 'On' : ''}
                 </button>
               )}
 

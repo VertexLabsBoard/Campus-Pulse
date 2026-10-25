@@ -1,8 +1,12 @@
-import { Send, AlertTriangle, Flame, Monitor, Wrench, Sparkles, Zap, FlaskConical, Clock, ShieldCheck } from 'lucide-react';
+import { Send, AlertTriangle, Flame, Monitor, Wrench, Sparkles, Zap, FlaskConical, Clock, ShieldCheck, Check } from 'lucide-react';
 import type { LocationItem, IssueItem } from '../types';
+import { LocationSelector } from './LocationSelector';
 
 interface ReportIssueProps {
   locations: LocationItem[];
+  locationsLoading: boolean;
+  locationsError: string | null;
+  onRetryLocations: () => void;
   issues: IssueItem[];
   reportLocId: string;
   setReportLocId: (id: string) => void;
@@ -37,6 +41,9 @@ const SEVERITIES = [
 
 export function ReportIssue({
   locations,
+  locationsLoading,
+  locationsError,
+  onRetryLocations,
   issues,
   reportLocId,
   setReportLocId,
@@ -61,6 +68,14 @@ export function ReportIssue({
 
   const selectedLoc = locations.find((l) => l.id === reportLocId);
 
+  const handleSeverityKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, level: number) => {
+    if (!['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    const nextLevel = event.key === 'Home' ? 1 : event.key === 'End' ? 5 : Math.min(5, Math.max(1, level + (event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : -1)));
+    setReportSeverity(nextLevel);
+    document.getElementById(`severity-${nextLevel}`)?.focus();
+  };
+
   return (
     <div className="report-split-layout animate-fade-in">
       {/* Main Form Column */}
@@ -73,25 +88,14 @@ export function ReportIssue({
         </div>
 
         <form onSubmit={onSubmitReport} className="report-form-flow">
-          {/* Location Picker */}
-          <div className="form-group">
-            <label className="form-label" htmlFor="report-location">
-              Campus Room / Space *
-            </label>
-            <select
-              id="report-location"
-              className="form-select"
-              value={reportLocId}
-              onChange={(e) => setReportLocId(e.target.value)}
-              required
-            >
-              {locations.map((loc) => (
-                <option key={loc.id} value={loc.id}>
-                  {loc.roomCode} — {loc.name} (Floor {loc.floor} • {loc.type})
-                </option>
-              ))}
-            </select>
-          </div>
+          <LocationSelector
+            locations={locations}
+            locationsLoading={locationsLoading}
+            locationsError={locationsError}
+            onRetryLocations={onRetryLocations}
+            selectedLocationId={reportLocId}
+            onSelectLocation={setReportLocId}
+          />
 
           {/* Category Picker */}
           <div className="form-group">
@@ -107,6 +111,7 @@ export function ReportIssue({
                     className={`category-chip ${isActive ? 'active' : ''}`}
                     onClick={() => setReportCategory(cat.id)}
                   >
+                    {isActive && <Check size={15} className="selection-check" aria-hidden="true" />}
                     <Icon size={14} />
                     <span>{cat.label}</span>
                   </button>
@@ -142,16 +147,22 @@ export function ReportIssue({
               </span>
             </div>
 
-            <div className="severity-segmented-grid">
+            <div className="severity-segmented-grid" role="radiogroup" aria-label="Operational severity">
               {SEVERITIES.map((sev) => {
                 const isSelected = reportSeverity === sev.level;
                 return (
                   <button
                     type="button"
+                    id={`severity-${sev.level}`}
                     key={sev.level}
-                    className={`severity-segment-btn ${isSelected ? 'active' : ''}`}
+                    className={`severity-segment-btn severity-level-${sev.level} ${isSelected ? 'active' : ''}`}
                     onClick={() => setReportSeverity(sev.level)}
+                    onKeyDown={(event) => handleSeverityKeyDown(event, sev.level)}
+                    role="radio"
+                    aria-checked={isSelected}
+                    tabIndex={isSelected ? 0 : -1}
                   >
+                    {isSelected && <Check size={14} className="severity-selection-check" aria-hidden="true" />}
                     <span className="severity-number">{sev.level}</span>
                     <span className="severity-title">{sev.title}</span>
                   </button>
@@ -190,7 +201,7 @@ export function ReportIssue({
               type="submit"
               className="btn-primary"
               style={{ width: '100%', padding: '12px 24px', fontSize: '0.94rem' }}
-              disabled={loading}
+              disabled={loading || locationsLoading || !reportLocId}
             >
               <Send size={16} />
               <span>{loading ? 'Submitting & Dispatching...' : 'Submit Campus Work Order'}</span>
