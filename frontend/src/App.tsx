@@ -139,6 +139,10 @@ export function App() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [feedFilter, setFeedFilter] = useState<'ALL' | 'MINE' | 'CRITICAL' | 'OPEN'>('ALL');
+  const [searchText, setSearchText] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [priorityFilter, setPriorityFilter] = useState('ALL');
+  const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
@@ -852,13 +856,36 @@ export function App() {
     setTimeout(() => setStatusMessage(null), 3800);
   }
 
-  // Filter issues
-  const filteredIssues = issues.filter(issue => {
-    if (feedFilter === 'MINE') return currentUser && issue.reporterId === currentUser.id;
-    if (feedFilter === 'CRITICAL') return issue.priorityLevel === 'CRITICAL';
-    if (feedFilter === 'OPEN') return !['RESOLVED', 'CLOSED', 'REJECTED'].includes(issue.status);
-    return true;
-  });
+  // Filter issues (tabs + search + dropdowns)
+const uniqueValues = (vals: (string | null | undefined)[]) =>
+  Array.from(new Set(vals.filter((v): v is string => Boolean(v)))).sort();
+const statusOptions = uniqueValues(issues.map(i => i.status));
+const priorityOptions = uniqueValues(issues.map(i => i.priorityLevel));
+const categoryOptions = uniqueValues(issues.map(i => i.category));
+const query = searchText.trim().toLowerCase();
+
+const filteredIssues = issues.filter(issue => {
+  // 1. Existing tabs
+  if (feedFilter === 'MINE' && !(currentUser && issue.reporterId === currentUser.id)) return false;
+  if (feedFilter === 'CRITICAL' && issue.priorityLevel !== 'CRITICAL') return false;
+  if (feedFilter === 'OPEN' && ['RESOLVED', 'CLOSED', 'REJECTED'].includes(issue.status)) return false;
+
+  // 2. Dropdown filters
+  if (statusFilter !== 'ALL' && issue.status !== statusFilter) return false;
+  if (priorityFilter !== 'ALL' && issue.priorityLevel !== priorityFilter) return false;
+  if (categoryFilter !== 'ALL' && issue.category !== categoryFilter) return false;
+
+  // 3. Search text
+  if (query) {
+    const haystack = [issue.ticketNo, issue.description, issue.roomCode, issue.category]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    if (!haystack.includes(query)) return false;
+  }
+  return true;
+});
+ 
 
   return (
     <div className="app-wrapper">
@@ -1333,6 +1360,41 @@ export function App() {
                 <RefreshCw size={14} /> Refresh
               </button>
             </div>
+            {/* Search & Filter Bar */}
+<div className="filter-bar">
+  <input
+    type="text"
+    className="filter-input"
+    placeholder="Search by ticket no, description, room or category..."
+    value={searchText}
+    onChange={e => setSearchText(e.target.value)}
+    aria-label="Search tickets"
+  />
+  <select className="filter-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} aria-label="Filter by status">
+    <option value="ALL">All statuses</option>
+    {statusOptions.map(s => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+  </select>
+  <select className="filter-select" value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} aria-label="Filter by priority">
+    <option value="ALL">All priorities</option>
+    {priorityOptions.map(p => <option key={p} value={p}>{p}</option>)}
+  </select>
+  <select className="filter-select" value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} aria-label="Filter by category">
+    <option value="ALL">All categories</option>
+    {categoryOptions.map(c => <option key={c} value={c}>{c}</option>)}
+  </select>
+  <button
+    className="btn-secondary"
+    onClick={() => {
+      setSearchText('');
+      setStatusFilter('ALL');
+      setPriorityFilter('ALL');
+      setCategoryFilter('ALL');
+    }}
+  >
+    Clear filters
+  </button>
+  <span className="filter-count">Showing {filteredIssues.length} of {issues.length}</span>
+</div>
 
             {/* Tickets Grid */}
             {filteredIssues.length === 0 ? (
