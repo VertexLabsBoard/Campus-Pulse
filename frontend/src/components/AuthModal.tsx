@@ -144,7 +144,7 @@ export function AuthModal({
           <button
             type="button"
             onClick={onClose}
-            style={{ position: 'absolute', top: 16, right: 16, background: 'transparent', color: '#CBD5E1', padding: 4 }}
+            className="auth-close-btn"
             aria-label="Close dialog"
           >
             <X size={20} />
@@ -221,7 +221,7 @@ export function AuthModal({
           {authMode === 'SIGNUP' && (
             <div>
               {authStep === 'FORM' ? (
-                <form onSubmit={onSendSignupOtp} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <form onSubmit={onSendSignupOtp} className="auth-form auth-registration-form">
                   {/* Institutional Role Selector */}
                   <div>
                     <label className="form-label" style={{ marginBottom: 6, display: 'block' }}>
@@ -250,17 +250,19 @@ export function AuthModal({
 
                   {/* Official Moderation Notice Banner */}
                   <div className="moderation-warning-box">
-                    <AlertTriangle size={18} color="#CF1322" style={{ flexShrink: 0, marginTop: 2 }} />
+                    <AlertTriangle size={16} />
                     <div>
-                      <strong style={{ color: '#820014' }}>Official University Moderation Warning:</strong>
-                      <p style={{ margin: '3px 0 0', color: '#5C0011', fontSize: '0.74rem', lineHeight: 1.45 }}>
-                        All registrations are strictly verified against Amity University academic databases. Accounts created with fraudulent names, invalid enrollment IDs, or fake credentials will be <strong>permanently suspended and reported to the Dean of Student Affairs</strong>.
+                      <strong>Verification policy</strong>
+                      <p>
+                        Your registration details are verified against University records before account activation.
                       </p>
                     </div>
                   </div>
 
+                  <section className="auth-section">
+                    <div className="auth-section-heading">Identity</div>
                   {/* Campus Selector */}
-                  <div>
+                  <div className="auth-field">
                     <label className="form-label" htmlFor="signup-campus">
                       <School size={13} style={{ display: 'inline', marginRight: 5, verticalAlign: '-2px' }} />
                       Amity Campus Branch *
@@ -284,7 +286,7 @@ export function AuthModal({
                   </div>
 
                   {/* Full Name */}
-                  <div>
+                  <div className="auth-field">
                     <label className="form-label" htmlFor="signup-name">Full Legal Name *</label>
                     <input
                       id="signup-name"
@@ -301,7 +303,7 @@ export function AuthModal({
                   </div>
 
                   {/* Institutional Email */}
-                  <div>
+                  <div className="auth-field">
                     <label className="form-label" htmlFor="signup-email">
                       Official Amity Email * ({signupRole === 'STUDENT' ? '@s.amity.edu' : '@amity.edu'})
                     </label>
@@ -325,12 +327,14 @@ export function AuthModal({
                       </span>
                     )}
                   </div>
+                  </section>
 
                   {/* Student Specific Fields */}
                   {signupRole === 'STUDENT' && (
-                    <>
+                    <section className="auth-section">
+                      <div className="auth-section-heading">Academic record</div>
                       {/* Enrollment Number starting with 'A' */}
-                      <div>
+                      <div className="auth-field">
                         <label className="form-label" htmlFor="signup-enrollment">
                           Amity Enrollment Number * (Must begin with 'A')
                         </label>
@@ -524,12 +528,14 @@ export function AuthModal({
                           </div>
                         )}
                       </div>
-                    </>
+                    </section>
                   )}
 
                   {/* Staff Specific Fields */}
                   {signupRole === 'STAFF' && (
-                    <div>
+                    <section className="auth-section">
+                      <div className="auth-section-heading">Professional details</div>
+                      <div className="auth-field">
                       <label className="form-label" htmlFor="signup-dept">Department / Unit *</label>
                       <select
                         id="signup-dept"
@@ -541,7 +547,8 @@ export function AuthModal({
                           <option key={d.id} value={d.id}>{d.name}</option>
                         ))}
                       </select>
-                    </div>
+                      </div>
+                    </section>
                   )}
 
                   <button
@@ -649,8 +656,8 @@ export function AuthModal({
           {authMode === 'LOGIN' && (
             <div>
               {authStep === 'FORM' ? (
-                <form onSubmit={onSendLoginOtp} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <div>
+                <form onSubmit={onSendLoginOtp} className="auth-form auth-login-form">
+                  <div className="auth-field">
                     <label className="form-label" htmlFor="login-email">
                       Registered Amity Email (@s.amity.edu or @amity.edu) *
                     </label>
@@ -677,7 +684,7 @@ export function AuthModal({
                     {authLoading ? 'Sending Sign-in Passcode...' : <>Send Sign-in Code <ArrowRight size={16} /></>}
                   </button>
 
-                  <div style={{ textAlign: 'center', fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: 4 }}>
+                  <div className="auth-registration-link">
                     Don't have an Amity account yet?{' '}
                     <button
                       type="button"
@@ -780,18 +787,8 @@ export function AuthModal({
 
           {/* ─── TAB 3: FAST-PASS (DEV/EVALUATION PERSONAS) ──────────────────── */}
           {authMode === 'FASTPASS' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{
-                background: '#FFFBE6',
-                border: '1px solid #FFE58F',
-                borderRadius: 'var(--radius-sm)',
-                padding: '10px 14px',
-                fontSize: '0.78rem',
-                color: '#874D00',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8
-              }}>
+            <div className="fastpass-content">
+              <div className="fastpass-intro">
                 <Sparkles size={16} />
                 <span>
                   <strong>Developer / Demo Fast-Pass:</strong> Instant single-click authentication as one of the pre-configured university personas.
@@ -840,36 +837,27 @@ export function AuthModal({
 
           {/* ─── ACTIVE SESSION CARD (IF LOGGED IN) ─────────────────────────── */}
           {currentUser && (
-            <div style={{
-              marginTop: 6,
-              background: '#FAFBFC',
-              border: '1px solid var(--border-base)',
-              borderRadius: 'var(--radius-sm)',
-              padding: '12px 16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 10
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div className="auth-session-card">
+              <div className="auth-session-header">
                 <div>
-                  <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--gold-deep)', fontWeight: 700 }}>
+                  <div className="auth-session-label">
                     Active University Session
                   </div>
-                  <div style={{ fontSize: '0.94rem', fontWeight: 700, color: 'var(--ink-primary)', marginTop: 2 }}>
+                  <div className="auth-session-name">
                     {currentUser.name}
                   </div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+                  <div className="auth-session-email">
                     {currentUser.email}
                   </div>
                   {currentUser.enrollmentNo && (
-                    <div style={{ fontSize: '0.76rem', color: 'var(--text-primary)', marginTop: 4 }}>
+                    <div className="auth-session-detail">
                       Enrollment: <strong style={{ color: 'var(--gold-deep)' }}>{currentUser.enrollmentNo}</strong>
                       {currentUser.course ? ` • ${currentUser.course}` : ''}
                       {currentUser.batchYear ? ` (${currentUser.batchYear})` : ''}
                     </div>
                   )}
                   {currentUser.campus && (
-                    <div style={{ fontSize: '0.74rem', color: 'var(--info-sapphire)', marginTop: 2 }}>
+                    <div className="auth-session-campus">
                       Campus: <strong>Amity University — {currentUser.campus}</strong>
                     </div>
                   )}
@@ -883,20 +871,7 @@ export function AuthModal({
               <button
                 type="button"
                 onClick={onLogout}
-                style={{
-                  background: '#FFF1F0',
-                  border: '1px solid #FFA39E',
-                  color: '#CF1322',
-                  padding: '7px 12px',
-                  borderRadius: 'var(--radius-sm)',
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  cursor: 'pointer'
-                }}
+                className="auth-signout-btn"
               >
                 <LogOut size={14} /> Sign Out of Amity Session
               </button>

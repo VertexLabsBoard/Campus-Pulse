@@ -2185,6 +2185,7 @@
   .persona-fastpass-grid { grid-template-columns: 1fr; }
 }
 
+
 /* Category chips: intentionally neutral by default, crisp blue when selected. */
 .category-chip {
   color: #475569;
@@ -2205,3 +2206,75 @@
 .category-chip .selection-check { color: #0066B3; }
 .category-chip:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(0, 102, 179, .22); }
 .category-chip.active:focus-visible { box-shadow: 0 0 0 3px rgba(0, 102, 179, .22), inset 0 0 0 1px rgba(0, 102, 179, .08); }
+
+/* Authentication modal: calm institutional form composition. */
+.auth-modal-card {
+  max-width: 580px;
+  border: 0;
+  border-radius: 12px;
+  box-shadow: 0 24px 64px rgba(11, 31, 58, .22);
+}
+.auth-modal-header { padding: 18px 28px 17px; border-bottom: 1px solid rgba(255,255,255,.1); }
+.auth-brand-mark { width: 38px; height: 38px; margin-bottom: 8px; }
+.auth-modal-title { font-size: 1.2rem; font-weight: 700; }
+.auth-modal-subtitle { font-size: .78rem; color: #C8D5E4; }
+.auth-close-btn { position: absolute; top: 14px; right: 16px; padding: 5px; color: #D6E1EE; background: transparent; border-radius: 6px; }
+.auth-close-btn:hover, .auth-close-btn:focus-visible { background: rgba(255,255,255,.1); color: #fff; }
+.auth-modal-body { padding: 20px 28px 24px; gap: 16px; }
+.auth-nav-tabs { background: #F1F5F9; padding: 3px; border: 1px solid #DCE3EC; border-radius: 7px; }
+.auth-nav-tab-btn { min-height: 36px; color: #64748B; border-radius: 5px; font-size: .76rem; }
+.auth-nav-tab-btn.active { color: #0B1F3A; background: #fff; box-shadow: 0 1px 2px rgba(11,31,58,.09); }
+.auth-nav-tab-btn.active svg { color: var(--blue-primary); }
+.auth-form { display: flex; flex-direction: column; gap: 18px; }
+.auth-login-form { max-width: 460px; margin: 8px auto 0; }
+.auth-field { display: flex; flex-direction: column; gap: 6px; }
+.auth-section { display: flex; flex-direction: column; gap: 14px; padding-top: 17px; border-top: 1px solid #E7ECF2; }
+.auth-section-heading { color: #52657D; font-family: var(--font-display); font-size: .73rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.auth-registration-form > :first-child { margin-bottom: -6px; }
+.role-selector-cards { gap: 10px; }
+.role-card-btn { min-height: 62px; border-radius: 8px; background: #fff; border-color: #DCE3EC; padding: 11px 13px; }
+.role-card-btn:hover { background: #F8FBFF; border-color: #B8D5EE; }
+.role-card-btn.active { background: #EFF6FF; border-color: var(--blue-primary); box-shadow: inset 0 0 0 1px rgba(0,102,179,.08); }
+.role-card-btn.active .role-card-title, .role-card-btn.active .role-card-title svg { color: #0B1F3A; }
+.role-card-btn.active .role-card-title svg { color: var(--blue-primary); }
+.role-card-domain { margin-top: 3px; }
+.moderation-warning-box { margin: -2px 0 0; padding: 10px 12px; border: 1px solid #E5EAF0; border-left: 3px solid var(--gold-primary); border-radius: 0 6px 6px 0; background: #FAFBFC; color: #52657D; }
+.moderation-warning-box svg { color: var(--gold-hover); flex: 0 0 auto; }
+.moderation-warning-box strong { color: #334155 !important; font-size: .78rem; }
+.moderation-warning-box p { margin: 2px 0 0 !important; color: #64748B !important; font-size: .74rem !important; line-height: 1.45; }
+.auth-modal-body .form-label { color: #596B82; font-size: .7rem; letter-spacing: .045em; }
+.auth-modal-body .form-input, .auth-modal-body .form-select, .course-search-input { min-height: 42px; border-color: #DCE3EC; background: #fff; }
+.auth-modal-body .form-input:focus, .auth-modal-body .form-select:focus, .course-search-input:focus { border-color: var(--blue-primary); box-shadow: 0 0 0 3px rgba(0,102,179,.12); }
+.course-selected-pill { border-radius: 6px; border-color: #B8E7CA; background: #F3FCF6; }
+.dual-year-grid { gap: 18px; }
+.auth-registration-link { margin-top: -2px; color: #64748B; text-align: center; font-size: .8rem; }
+.auth-registration-link button { color: var(--blue-primary) !important; text-decoration: none !important; }
+.auth-registration-link button:hover { text-decoration: underline !important; }
+.fastpass-content { display: flex; flex-direction: column; gap: 14px; }
+.fastpass-intro { display: flex; align-items: flex-start; gap: 8px; padding: 0 1px; color: #64748B; font-size: .78rem; line-height: 1.45; }
+.fastpass-intro svg { color: var(--gold-hover); flex: 0 0 auto; margin-top: 1px; }
+.fastpass-intro strong { color: #334155; }
+.persona-fastpass-grid { gap: 10px; }
+.persona-fastpass-card { min-height: 84px; padding: 12px; border-radius: 7px; background: #fff; border-color: #DCE3EC; }
+.persona-fastpass-card:hover { background: #F8FBFF; border-color: #B8D5EE; transform: translateY(-1px); }
+.persona-fastpass-card strong { color: #0B1F3A; }
+.persona-fastpass-card strong svg { color: var(--blue-primary); }
+.auth-session-card { margin-top: 2px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; background: #FAFBFC; border: 1px solid #DCE3EC; border-radius: 8px; }
+.auth-session-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.auth-session-label { color: #64748B; font-size: .66rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.auth-session-name { margin-top: 3px; color: #172334; font-size: .94rem; font-weight: 700; }
+.auth-session-email { color: #64748B; font-family: var(--font-mono); font-size: .75rem; }
+.auth-session-detail { margin-top: 6px; color: #475569; font-size: .75rem; line-height: 1.4; }
+.auth-session-campus { margin-top: 3px; color: #5279A4; font-size: .73rem; }
+.auth-signout-btn { min-height: 34px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid #F3C4C4; border-radius: 6px; background: transparent; color: #B42318; font-size: .76rem; font-weight: 600; }
+.auth-signout-btn:hover { background: #FFF5F5; border-color: #E99A9A; }
+
+@media (max-width: 560px) {
+  .auth-modal-body { padding: 18px 18px 22px; }
+  .auth-modal-header { padding: 16px 20px 15px; }
+  .auth-nav-tab-btn { min-width: 0; font-size: .71rem; padding: 6px 5px; }
+  .auth-nav-tab-btn svg { width: 14px; height: 14px; }
+  .role-selector-cards { grid-template-columns: 1fr; }
+  .persona-fastpass-grid { grid-template-columns: 1fr; }
+  .auth-session-header { gap: 8px; }
+}
