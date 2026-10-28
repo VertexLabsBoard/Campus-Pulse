@@ -31,7 +31,7 @@ export const LOCATION_TYPES: { id: LocationTypeId; label: string }[] = [
 ];
 
 export const CAMPUS_BLOCKS = [
-  { id: 'A', label: 'A Block (existing directory)' },
+  { id: 'A', label: 'A Block' },
   { id: 'C', label: 'C Block' },
   { id: 'D', label: 'D Block' },
   ...['E', 'F', 'I', 'J', 'K'].flatMap((block) =>

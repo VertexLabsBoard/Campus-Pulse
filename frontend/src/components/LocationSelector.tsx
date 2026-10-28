@@ -67,13 +67,6 @@ function getOptions(locations: LocationItem[]): LocationOption[] {
   return [...registered, ...candidates];
 }
 
-function getSourceLabel(source: LocationOption['source']): string {
-  if (source === 'registered') return '';
-  if (source === 'inferred') return ' — inferred candidate';
-  if (source === 'map-derived') return ' — map-listed candidate';
-  return ' — supplied candidate';
-}
-
 export function LocationSelector({
   locations,
   locationsLoading,
@@ -140,7 +133,6 @@ export function LocationSelector({
     )
     .sort((a, b) => a.label.localeCompare(b.label));
   const selectedOption = options.find((option) => option.id === currentSelectionId);
-  const isRegistered = Boolean(selectedOption?.backendLocationId);
   const selectedTypeLabel = LOCATION_TYPES.find((type) => type.id === currentType)?.label;
   const selectedSummary = selectedOption
     ? `${selectedOption.blockId ? `${selectedOption.blockId} · ` : ''}${selectedOption.floor !== undefined ? `${selectedOption.floor === 0 ? 'Ground floor' : `Floor ${selectedOption.floor}`} · ` : ''}${selectedOption.roomCode ? `${selectedOption.roomCode} · ` : ''}${selectedOption.label}`
@@ -323,7 +315,6 @@ export function LocationSelector({
             {filteredOptions.map((option) => (
               <option key={option.id} value={option.id}>
                 {option.label}
-                {getSourceLabel(option.source)}
               </option>
             ))}
             <option value="other">Other / Not Listed</option>
@@ -363,11 +354,6 @@ export function LocationSelector({
         </div>
       )}
 
-      {currentSelectionId && !isRegistered && (
-        <p className="location-selector-warning" role="status">
-          This place has no existing backend location ID. To avoid filing the report against the wrong room, select a registered location or ask an administrator to add it to the campus directory.
-        </p>
-      )}
       {currentType && currentBlock === 'campus-wide' && (
         <p className="location-selector-warning" role="status">
           A campus-wide location is not linked to a dispatch record. Choose a listed block or facility to submit a report.

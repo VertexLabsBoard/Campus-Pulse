@@ -7,30 +7,30 @@
 
 :root {
   /* Institutional Core Palette */
-  --ink-primary:         #172334;
-  --navy-deep:           #0B1F3A;
-  --navy-header:         #0B1F3A;
-  --navy-surface:        #17385E;
+  --ink-primary:         #172B4D;
+  --navy-deep:           #0B1930;
+  --navy-header:         #142B4A;
+  --navy-surface:        #1C385C;
   --navy-border-subtle:  rgba(255, 255, 255, 0.08);
 
   /* Workspace Surfaces (Light Editorial Control Room) */
-  --bg-app:              #F5F7FA;
+  --bg-app:              #F7F9FC;
   --surface-card:        #FFFFFF;
   --surface-raised:      #FAFBFC;
   --surface-sunken:      #EDEFF3;
   --surface-hover:       #F1F3F7;
 
   /* Typography Colors */
-  --text-primary:        #172334;
-  --text-secondary:      #64748B;
+  --text-primary:        #172B4D;
+  --text-secondary:      #68768A;
   --text-muted:          #8A96A6;
   --text-on-dark:        #F8FAFC;
   --text-on-dark-muted:  #94A3B8;
 
   /* Institutional Borders */
-  --border-subtle:       #E6E9EF;
-  --border-base:         #DCE1E8;
-  --border-strong:       #CAD2DC;
+  --border-subtle:       #EDF1F6;
+  --border-base:         #E2E8F0;
+  --border-strong:       #CBD5E1;
   --border-active:       #B2BED0;
 
   /* Signature Collegiate Gold */
@@ -40,19 +40,19 @@
   --gold-tint:           rgba(201, 154, 46, 0.12);
   --gold-tint-strong:    rgba(201, 154, 46, 0.22);
   --gold-glow:           rgba(201, 154, 46, 0.18);
-  --blue-primary:        #0066B3;
-  --blue-hover:          #005A9E;
+  --blue-primary:        #356AE6;
+  --blue-hover:          #2858C7;
 
   /* Semantic State Colors */
-  --success:             #248568;
+  --success:             #16845B;
   --success-bg:          #E8F6F1;
   --success-border:      #A9DFCE;
 
-  --warning:             #C58A28;
+  --warning:             #B7791F;
   --warning-bg:          #FEF7EC;
   --warning-border:      #F7D8A1;
 
-  --critical:            #C84A4A;
+  --critical:            #C63D46;
   --critical-bg:         #FDEEEE;
   --critical-border:     #F4AEAE;
 
@@ -83,8 +83,10 @@
   --space-4:             16px;
   --space-5:             20px;
   --space-6:             24px;
+  --space-7:             28px;
   --space-8:             32px;
   --space-10:            40px;
+  --space-12:            48px;
 
   /* Border Radii */
   --radius-xs:           4px;
