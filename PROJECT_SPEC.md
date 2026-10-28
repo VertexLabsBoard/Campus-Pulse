@@ -110,7 +110,7 @@ React + TypeScript (PWA)  ──REST/JSON──▶  Spring Boot (Java)  ──�
 | Layer | Choice |
 |---|---|
 | Frontend | React + TypeScript, mobile-first, PWA |
-| Backend | Java 21 + Spring Boot, Spring Security, Spring Data JPA |
+| Backend | Java 25 + Spring Boot, Spring Security, Spring Data JPA |
 | Migrations | Flyway |
 | Database | PostgreSQL (MySQL acceptable if already comfortable; do not burn time switching) |
 | Python service | FastAPI + sentence-transformers (embeddings) |

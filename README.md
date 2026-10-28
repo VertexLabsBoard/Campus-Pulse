@@ -1,27 +1,81 @@
 # 🏛️ Campus Pulse
 
-> **Amity University Issue Dispatch & Resolution Platform**  
-> Report a campus problem in under 30 seconds. Track live SLA timers. Resolve issues collaboratively.
+> **Next-Generation Campus Incident Dispatch & Facility Management Platform**  
+> *Engineered for Amity University. Report issues in under 30 seconds via scannable QR placards, track automated SLA countdowns, and streamline campus-wide maintenance resolution.*
+
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.5-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-8.3-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-4169E1?logo=postgresql&logoColor=white)](https://supabase.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
-## 🌟 Overview
+## 🌟 Executive Overview
 
-**Campus Pulse** is a full-stack, enterprise-grade university incident management platform built for Amity University. It streamlines how students report campus maintenance, IT, electrical, and lab issues, and gives university staff and administrators real-time dispatch and SLA resolution capabilities.
+**Campus Pulse** is an enterprise-grade university operations and incident dispatch platform designed to modernize campus living, maintenance, and facility management across university blocks, lecture halls, computer laboratories, hostels, and sports facilities.
 
-### ✨ Key Features
-- 🎓 **Amity University Verified Authentication:**
-  - Student registration restricted to `@s.amity.edu` with enrollment validation (`A...`).
-  - Staff registration restricted to `@amity.edu`.
-  - Secure 6-digit Email OTP verification with rate limiting and database persistence.
-  - Development Auto-Fill helper for instant local testing without an active email server.
-- ⚡ **Rapid QR Code Issue Reporting:** Report problems in classrooms, labs, or hostels in under 30 seconds.
-- ⏱️ **Live SLA Policies & Status Timers:** Auto-assigned resolution deadlines (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`) with real-time countdowns.
-- 📣 **Community Placards & Upvoting:** Students upvote existing tickets to amplify visibility and prevent duplicates.
-- 👥 **Role-Based Workspaces:**
-  - **Student View:** Feed of campus issues, personal ticket history, upvoting, feedback ratings.
-  - **Staff Dispatch View:** Internal ticket triage, status updates (`ASSIGNED`, `IN_PROGRESS`, `RESOLVED`), work notes.
-  - **Admin View:** University-wide analytics, department resolution rates, and SLA audits.
+It provides a transparent, collaborative communication loop between students, faculty, facility dispatch technicians, and university administration with real-time SLA tracking, automated OTP authentication, community upvoting, and single-click printable QR doorplate placards.
+
+---
+
+## ✨ Key System Features
+
+### 🎓 1. Verified Amity Authentication & Passwordless OTP
+- **Domain-Enforced Registration:**
+  - Students: Strict validation for `@s.amity.edu` email domains and enrollment numbers (`A...`).
+  - Staff / Faculty: Dedicated registration for official `@amity.edu` addresses.
+- **Enterprise OTP Delivery Engine:**
+  - Integrated with **Brevo (Sendinblue)** and **Gmail SMTP** relays.
+  - Sends high-priority verification emails with official university branding directly to Microsoft 365 Outlook inboxes.
+  - Built-in rate limiting, 10-minute expiry, and database persistence.
+  - **Dev Testing Mode:** Built-in auto-fill helper for instant offline testing without requiring an email server.
+
+### 📱 2. High-Resolution QR Doorplate Placards & PDF Generation
+- **Dynamic Scannable QR Codes:** Every single classroom, computer lab, seminar hall, and facility across Blocks A through J has a dedicated scannable QR token.
+- **Instant Printable A4 Doorplates:** Single-click download of official Amity university doorplate placards in `.pdf` format powered by `jspdf` and `qrcode`.
+- **Smart QR Auto-Fill:** Scanning a room placard via any mobile camera automatically routes the student to the report form with Block, Floor, and Room pre-selected.
+
+### 🧭 3. 4-Way Campus Hub Directory & Smart Search
+- Comprehensive campus facility directory with instant multi-facet filtering:
+  - **Block Filter:** Blocks A through J.
+  - **Floor Filter:** Ground Floor, 1st Floor, 2nd Floor, 3rd Floor, 4th Floor.
+  - **Facility Type Filter:** Classrooms, Computer Labs, Washrooms, Auditoriums, Faculty Cabins, Cafeteria.
+  - **Live Search Query:** Instant fuzzy search across room numbers, faculty names, and lab names.
+
+### ⏱️ 4. Automated SLA Deadlines & Real-Time Tracking
+- Every reported issue is categorized with automated Service Level Agreement (SLA) timers:
+  - `CRITICAL`: 2 Hours (e.g., electrical hazards, elevator failures)
+  - `HIGH`: 6 Hours (e.g., lab AC failure, projector malfunction during lectures)
+  - `MEDIUM`: 24 Hours (e.g., plumbing, door locks)
+  - `LOW`: 48 Hours (e.g., furniture, aesthetic repairs)
+- Dynamic visual countdown timers with breach alerts for administration.
+
+### 👥 5. Dedicated Persona Workspaces
+- **Student Portal:** Browse the live campus feed, report issues, upvote community tickets to prevent duplicates, and rate completed resolutions.
+- **Staff Dispatch Queue:** Department-specific operational dashboard (IT, Housekeeping, Electrical, Civil) to claim tickets, update progress (`ASSIGNED`, `IN_PROGRESS`, `RESOLVED`), and attach resolution notes.
+- **Admin Command Center:** University-wide analytics, SLA breach audits, department efficiency metrics, and campus location registry.
+
+---
+
+## 🏗️ System Architecture
+
+```mermaid
+graph TD
+    Client[React 19 + TypeScript Frontend]
+    Vite[Vite Dev Proxy :5173]
+    API[Spring Boot 3.4.5 REST API :8080]
+    DB[(PostgreSQL Database / Supabase)]
+    Brevo[Brevo SMTP / Mail Relay]
+    Outlook[Student Outlook @s.amity.edu]
+
+    Client -->|HTTP / REST| Vite
+    Vite -->|Proxy /api| API
+    API -->|JPA / Flyway Migrations| DB
+    API -->|JavaMailSender / TLS 587| Brevo
+    Brevo -->|SMTP Delivery| Outlook
+```
 
 ---
 
@@ -29,221 +83,174 @@
 
 ```
 Campus Pulse/
-├── backend/                   ← Spring Boot 3 (Java 21) REST API
-│   ├── src/main/java/         ← Controllers, Services, Entities, Security
-│   ├── src/main/resources/    ← Config & Flyway Database Migrations (V1–V7)
-│   ├── .env.example           ← Environment variable template
-│   └── pom.xml                ← Maven dependencies
-├── frontend/                  ← React 19 + TypeScript (Vite)
-│   ├── src/App.tsx            ← Campus Pulse application & state
-│   ├── src/data/              ← Amity campus & full course directory
-│   └── package.json           ← Dependencies & scripts
-├── docs/                      ← Architecture, SRS, and schemas
-├── .env.example               ← Root environment variables template
-├── .gitignore                 ← Security-hardened gitignore (blocks all secrets)
-└── start-supabase.ps1         ← 1-click Windows startup script
+├── backend/                              # Spring Boot 3 REST API (Java 21/25)
+│   ├── src/main/java/com/campuspulse/
+│   │   ├── api/                          # REST Controllers & DTOs
+│   │   ├── config/                       # Security, CORS, OpenAPI, Data Seeders
+│   │   ├── domain/                       # JPA Entities (User, Issue, Location, Otp, SLA)
+│   │   ├── exception/                    # Global Exception Handlers
+│   │   ├── repository/                   # Spring Data JPA Repositories
+│   │   ├── security/                     # UserPrincipal & Security Context
+│   │   └── service/                      # Business Logic (Auth, Issue, OTP, Mail)
+│   ├── src/main/resources/
+│   │   ├── db/migration/                 # Flyway SQL Migrations (V1 to V7)
+│   │   ├── application.properties        # Core Application Properties
+│   │   └── application-supabase.properties # Supabase Cloud Profile
+│   ├── .env.example                      # Environment variables template
+│   └── pom.xml                           # Maven dependencies
+├── frontend/                             # React 19 + TypeScript Frontend
+│   ├── src/
+│   │   ├── components/                   # Modular UI Components
+│   │   │   ├── AdminDashboard.tsx        # University Analytics & SLA Audits
+│   │   │   ├── AuthModal.tsx             # Amity SSO & 6-Digit OTP Modal
+│   │   │   ├── CampusFeed.tsx            # Live Campus Ticket Feed & Filters
+│   │   │   ├── CampusHub.tsx             # 4-Way Directory & QR Placard Center
+│   │   │   ├── IssueDetailModal.tsx      # Comprehensive Issue Inspection & Upvoting
+│   │   │   ├── LocationSelector.tsx      # Interactive Campus Selector
+│   │   │   ├── QrPlacardsModal.tsx       # Live QR Inspector & A4 PDF Generator
+│   │   │   ├── ReportIssue.tsx           # Quick 30-Second Issue Submission
+│   │   │   ├── Sidebar.tsx               # Navigation & Role Selector
+│   │   │   ├── StaffQueue.tsx            # Technician Dispatch & Ticket Triage
+│   │   │   └── Topbar.tsx                # Status Banner & Notifications
+│   │   ├── data/locationCatalog.ts       # Structured University Campus Catalog
+│   │   ├── utils/qrPdfGenerator.ts       # jsPDF & QRCode Placard Generator Engine
+│   │   ├── types.ts                      # Unified TypeScript Definitions
+│   │   ├── App.tsx                       # Master Application Root
+│   │   └── index.css                     # Global Design System & Variables
+│   ├── package.json                      # Frontend dependencies
+│   └── vite.config.ts                    # Vite config with API proxy
+├── docs/                                 # Technical Specifications & SRS
+├── .env.example                          # Root environment template
+└── README.md                             # Project Documentation
 ```
 
 ---
 
-## 📖 Quick Links & Documentation
+## 🚀 Getting Started
 
-- 📘 **[Step-by-Step Setup & Keys Guide (SETUP_GUIDE.md)](./SETUP_GUIDE.md)** — Detailed instructions on what keys you need, how to get them, and how to run the app in different modes.
-- 📐 **[Project Specifications (PROJECT_SPEC.md)](./PROJECT_SPEC.md)** — Full technical architecture and feature requirements.
-- 📑 **[System Documentation (docs/)](./docs/README.md)** — SRS, entity diagrams, and workflow charts.
-
----
-
-## 🔑 What Keys / APIs Do You Need to Add?
-
-| Mode | Keys / APIs Required? | What You Need |
-|---|---|---|
-| **🧪 Local Dev / Testing** | ❌ **NONE (Zero setup!)** | Just run the app! Embedded database and on-screen OTP auto-fill work immediately. |
-| **☁️ Cloud Supabase Mode** | ✅ **Database credentials** | Free Supabase PostgreSQL connection string + DB password in `.env`. |
-| **📬 Real Email Delivery** | ⚡ **Optional SMTP / API key** | 16-character Google App Password (free) or Resend API key (`re_...`). |
-
-> 👉 **See the full [SETUP_GUIDE.md](./SETUP_GUIDE.md) for step-by-step instructions on obtaining these free keys.**
-
----
-
-## 📋 Prerequisites
-
-Make sure you have the following installed:
-- **Java JDK 21+** ([Eclipse Temurin](https://adoptium.net/) or OpenJDK)
-- **Node.js 18+** ([NodeJS.org](https://nodejs.org/))
+### 📋 Prerequisites
+- **Java JDK 21 or 25** (OpenJDK or Eclipse Temurin)
+- **Node.js 18+** & `npm`
 - **Git**
 
 ---
 
-## 🚀 Quick Start (Easiest Way)
-
-### 1. Clone the repository
+### 1. Clone & Setup Configuration
 ```bash
-git clone https://github.com/your-username/campus-pulse.git
-cd campus-pulse
+git clone https://github.com/Gohan208x/Campus-Pulse.git
+cd Campus-Pulse
 ```
 
-### 2. Configure Environment Variables
-Copy `.env.example` to `backend/.env`:
+Create your `backend/.env` file:
 ```bash
-# On Windows PowerShell:
+# Windows (PowerShell)
 Copy-Item backend\.env.example backend\.env
 
-# On Mac / Linux:
+# Linux / macOS
 cp backend/.env.example backend/.env
 ```
 
-Open `backend/.env` in any text editor and fill in your database credentials (see [Database Setup](#-database-setup) below).
+---
 
-### 3. Launch the Application
+### 2. Configure Database & Email OTP
 
-#### Option A — Windows 1-Click Script (Recommended)
-Simply run:
-```powershell
-.\start-supabase.ps1
+Edit `backend/.env` with your settings:
+
+```properties
+SPRING_PROFILES_ACTIVE=supabase
+
+# ─── Supabase PostgreSQL Database ─────────────────────────────────────────────
+SUPABASE_DB_URL=jdbc:postgresql://aws-0-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require
+SUPABASE_DB_USER=postgres.your_project_id
+SUPABASE_DB_PASSWORD=YourDatabasePassword
+
+# ─── Brevo SMTP Configuration (Recommended - Free) ───────────────────────────
+SPRING_MAIL_HOST=smtp-relay.brevo.com
+SPRING_MAIL_PORT=587
+SPRING_MAIL_USERNAME=your_brevo_smtp_login
+SPRING_MAIL_PASSWORD=your_brevo_smtp_key
+
+APP_MAIL_FROM=your_verified_brevo_email@gmail.com
+APP_MAIL_FROM_NAME=Amity University Dispatch Portal
 ```
-This automatically loads your `.env` variables and starts both the Backend and Frontend in separate windows!
 
-#### Option B — Manual Launch (Any OS)
+> 💡 **Tip:** If you do not configure an external SMTP provider, the application automatically runs in **Dev Mode**: OTPs are printed directly in the backend terminal console, and an **Auto-Fill** button appears in the UI.
 
-**Terminal 1 — Backend (Spring Boot):**
+---
+
+### 3. Run the Backend
+
 ```bash
 cd backend
 ./mvnw spring-boot:run
-# On Windows PowerShell:
-# .\mvnw.cmd spring-boot:run
 ```
-*Backend runs on: [http://localhost:8080](http://localhost:8080)*
+*(On Windows Command Prompt: `mvnw.cmd spring-boot:run`)*
 
-**Terminal 2 — Frontend (Vite):**
+- Backend API boots on: `http://localhost:8080`
+- Interactive Swagger UI: `http://localhost:8080/swagger-ui.html`
+- Health Endpoint: `http://localhost:8080/api/v1/health`
+
+---
+
+### 4. Run the Frontend
+
+In a second terminal:
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-*Frontend runs on: [http://localhost:5173](http://localhost:5173)*
+
+- Web Application runs on: `http://localhost:5173`
 
 ---
 
-## 🗄️ Database Setup
+## 🧪 Default Test Personas
 
-Campus Pulse uses PostgreSQL. You can use either **Cloud Supabase** (free) or a **Local PostgreSQL database**.
-
-### Option 1: Supabase (Recommended — Free Cloud PostgreSQL)
-1. Create a free account at [Supabase.com](https://supabase.com).
-2. Create a new project named **Campus Pulse** (choose a region near you, e.g., Mumbai / `ap-south-1`).
-3. Set your Database Password and save it.
-4. Go to **Project Settings** → **Database** → **Connection String** → select **Session Pooler** (URI).
-5. Copy the connection string and paste it into `backend/.env`:
-   ```properties
-   SPRING_PROFILES_ACTIVE=supabase
-   SUPABASE_DB_URL=jdbc:postgresql://aws-0-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require
-   SUPABASE_DB_USER=postgres.your_project_ref
-   SUPABASE_DB_PASSWORD=YourDatabasePassword
-   ```
-6. **Flyway Migrations Run Automatically:** When the backend boots, Flyway will automatically execute migrations `V1` through `V7`, creating all tables (`users`, `issues`, `departments`, `locations`, `otps`, etc.) and seeding initial campus data!
-
-### Option 2: Local PostgreSQL / Docker
-If running PostgreSQL locally or via Docker:
-```bash
-docker compose up db -d
-```
-In `backend/.env`:
-```properties
-SPRING_PROFILES_ACTIVE=local
-DB_URL=jdbc:postgresql://localhost:5432/campus_pulse
-DB_USERNAME=campus_pulse
-DB_PASSWORD=changeme
-```
-
----
-
-## 📧 Email OTP Setup
-
-Campus Pulse includes an automated OTP generation and verification engine.
-
-### 🧪 Development Mode (Zero Setup Needed)
-If you don't configure SMTP credentials, the backend runs in **Dev Mode**:
-- OTPs are saved in PostgreSQL and logged to the terminal console.
-- The frontend displays a convenient **`⚡ Dev Testing OTP`** badge with a 1-click **Auto-Fill** button.
-- You can test the entire registration and sign-in flow immediately without needing an email provider!
-
-### 📬 Real Email Delivery to Inboxes
-To have verification emails land directly in student `@s.amity.edu` Outlook inboxes:
-
-#### 1. Gmail SMTP (Recommended — 100% Free)
-1. Go to your [Google Account Security](https://myaccount.google.com/security) (make sure 2-Step Verification is ON).
-2. Search **"App passwords"**, create one named **`Campus Pulse`**, and copy the 16-character code.
-3. In `backend/.env`, set:
-   ```properties
-   SPRING_MAIL_HOST=smtp.gmail.com
-   SPRING_MAIL_PORT=587
-   SPRING_MAIL_USERNAME=your_gmail@gmail.com
-   SPRING_MAIL_PASSWORD=your_16_char_app_password
-   ```
-
-#### 2. Resend API
-1. Create an API key at [Resend.com](https://resend.com).
-2. In `backend/.env`, set:
-   ```properties
-   RESEND_API_KEY=re_your_api_key
-   RESEND_FROM=Campus Pulse <onboarding@resend.dev>
-   ```
-   *(Note: Resend's free sandbox sends to your verified Resend account email unless a custom domain DNS is verified).*
-
----
-
-## 🔑 Default Accounts for Testing
-
-The database automatically seeds with pre-configured accounts:
+The system automatically initializes with pre-seeded demo accounts across university roles:
 
 | Role | Email | Campus | Description |
 |---|---|---|---|
 | **Student** | `student1@s.amity.edu` | Noida | Undergraduate Student |
 | **Student** | `student2@s.amity.edu` | Noida | Postgraduate Student |
-| **Staff (IT)** | `staff.it@amity.edu` | Noida | IT Support Technician |
+| **Staff (IT)** | `staff.it@amity.edu` | Noida | IT Systems Engineer |
 | **Staff (Housekeeping)** | `staff.housekeeping@amity.edu` | Noida | Facilities Specialist |
-| **Staff (Electrical)** | `staff.electrical@amity.edu` | Noida | Maintenance Engineer |
+| **Staff (Electrical)** | `staff.electrical@amity.edu` | Noida | Electrical Maintenance |
 | **Admin** | `admin@amity.edu` | Noida | Campus Operations Director |
 
-*(You can sign in to any of these using the passwordless OTP flow, or register a new student account using your own `@s.amity.edu` email).*
+*(You can also register your personal `@s.amity.edu` email using the passwordless OTP registration flow).*
 
 ---
 
-## 🔒 Security & Privacy Notice
+## 📑 Interactive API Endpoints (Swagger / OpenAPI)
 
-- **No Secrets in Git:** All passwords, tokens, private keys, and `.env` files are ignored via [.gitignore](file:///.gitignore).
-- **Public Repository Safe:** Never commit `.env` to GitHub. Only commit `.env.example`.
-- **Amity Data Integrity:** Misinformation in registrations or unauthorized escalation is strictly logged in audit tables for administrative review.
+| Category | Method | Endpoint | Description |
+|---|---|---|---|
+| **Health** | `GET` | `/api/v1/health` | Service health & build version |
+| **Auth** | `POST` | `/api/v1/auth/signup/send-otp` | Request 6-digit registration OTP |
+| **Auth** | `POST` | `/api/v1/auth/signup/verify` | Complete student / staff signup |
+| **Auth** | `POST` | `/api/v1/auth/login/send-otp` | Request passwordless sign-in OTP |
+| **Auth** | `POST` | `/api/v1/auth/login/verify` | Verify OTP and create session |
+| **Auth** | `POST` | `/api/v1/auth/logout` | Invalidate authenticated session |
+| **Issues** | `GET` | `/api/v1/issues` | Fetch feed with filtering & pagination |
+| **Issues** | `POST` | `/api/v1/issues` | Report a new campus issue |
+| **Issues** | `POST` | `/api/v1/issues/{id}/upvote` | Upvote an existing issue |
+| **Staff** | `GET` | `/api/v1/staff/queue` | Technician issue resolution queue |
+| **Staff** | `PATCH` | `/api/v1/staff/issues/{id}/status` | Update resolution status & notes |
+| **Admin** | `GET` | `/api/v1/admin/analytics` | University SLA metrics & audits |
 
----
-
-## 🧪 Running Tests
-
-### Backend Unit & Integration Tests:
-```bash
-cd backend
-./mvnw test
-# Windows: .\mvnw.cmd test
-```
-*Runs 19 comprehensive tests against in-memory H2 with mock authentication and Amity rule validations.*
-
-### Frontend Production Build:
-```bash
-cd frontend
-npm run build
-```
+Full Swagger documentation is available at `http://localhost:8080/swagger-ui.html`.
 
 ---
 
-## 📚 API Documentation
+## 🔒 Security & Data Protection
 
-When the backend is running, explore the interactive OpenAPI / Swagger UI:
-- **Swagger Documentation:** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
-- **OpenAPI Schema (JSON):** [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
-- **Health Check:** [http://localhost:8080/api/v1/health](http://localhost:8080/api/v1/health)
+1. **Credentials Isolation:** Secret keys, SMTP passwords, and database credentials are kept strictly inside `.env` (which is git-ignored and never committed to source control).
+2. **Session Security:** Standard HTTP-only session cookies with CSRF defense, role-based method security, and rate-limited auth endpoints.
+3. **Audit Trails:** Status transitions and issue assignments maintain complete history records (`IssueStatusHistory`) for administrative transparency.
 
 ---
 
-## 📄 License
-This project is open-source under the [MIT License](LICENSE).
+## 📜 License
+
+This project is licensed under the [MIT License](LICENSE).
