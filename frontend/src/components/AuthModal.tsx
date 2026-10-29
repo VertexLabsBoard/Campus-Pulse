@@ -1,17 +1,81 @@
-import { useRef, useEffect } from 'react';
-import { X, AlertTriangle, CheckCircle2, School, Search, Check, LogOut, Sparkles, KeyRound, ClipboardPenLine, Zap, GraduationCap, BriefcaseBusiness, Monitor, Wrench, Landmark, ArrowRight, ArrowLeft } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import {
+  X,
+  AlertTriangle,
+  CheckCircle2,
+  Lock,
+  Mail,
+  Eye,
+  EyeOff,
+  LogOut,
+  Sparkles,
+  KeyRound,
+  GraduationCap,
+  BriefcaseBusiness,
+  ShieldCheck,
+  ArrowRight,
+  UserCheck,
+  Search,
+  Check
+} from 'lucide-react';
 import { AMITY_CAMPUSES, type AmityCourse } from '../data/amityCourses';
 import type { User, DepartmentItem } from '../types';
+
+export interface DemoAccountInfo {
+  role: 'STUDENT' | 'STAFF' | 'ADMIN';
+  label: string;
+  name: string;
+  email: string;
+  password: string;
+  badge: string;
+  subtext: string;
+  icon: typeof GraduationCap;
+  accentColor: string;
+}
+
+export const PRESET_DEMO_ACCOUNTS: DemoAccountInfo[] = [
+  {
+    role: 'STUDENT',
+    label: 'Student Demo',
+    name: 'Demo Student',
+    email: 'demo.student@s.amity.edu',
+    password: 'StudentDemo2025!',
+    badge: 'A000000001 • 2024-2028',
+    subtext: 'B.Tech Computer Science & Engineering (Noida)',
+    icon: GraduationCap,
+    accentColor: '#10B981'
+  },
+  {
+    role: 'STAFF',
+    label: 'Faculty / Staff Demo',
+    name: 'Demo Staff',
+    email: 'demo.staff@amity.edu',
+    password: 'StaffDemo2025!',
+    badge: 'IT & Facilities',
+    subtext: 'Campus Operations & Incident Resolution',
+    icon: BriefcaseBusiness,
+    accentColor: '#3B82F6'
+  },
+  {
+    role: 'ADMIN',
+    label: 'Dean / Administrator Demo',
+    name: 'Demo Admin',
+    email: 'demo.admin@amity.edu',
+    password: 'AdminDemo2025!',
+    badge: 'Operations Dean',
+    subtext: 'Full Campus Oversight, SLA & Workload Metrics',
+    icon: ShieldCheck,
+    accentColor: '#8B5CF6'
+  }
+];
 
 interface AuthModalProps {
   show: boolean;
   onClose: () => void;
   currentUser: User | null;
   departments: DepartmentItem[];
-  authMode: 'LOGIN' | 'SIGNUP' | 'FASTPASS';
-  setAuthMode: (mode: 'LOGIN' | 'SIGNUP' | 'FASTPASS') => void;
-  authStep: 'FORM' | 'OTP';
-  setAuthStep: (step: 'FORM' | 'OTP') => void;
+  authMode: 'DEMO' | 'LOGIN' | 'SIGNUP';
+  setAuthMode: (mode: 'DEMO' | 'LOGIN' | 'SIGNUP') => void;
   authLoading: boolean;
   authError: string | null;
   authSuccess: string | null;
@@ -20,8 +84,10 @@ interface AuthModalProps {
   // Login fields
   loginEmail: string;
   setLoginEmail: (email: string) => void;
-  onSendLoginOtp: (e: React.FormEvent) => void;
-  onVerifyLoginOtp: (e: React.FormEvent) => void;
+  loginPassword: string;
+  setLoginPassword: (pw: string) => void;
+  onLogin: (e: React.FormEvent) => void;
+  onQuickDemoLogin: (account: DemoAccountInfo) => void;
   // Signup fields
   signupRole: 'STUDENT' | 'STAFF';
   setSignupRole: (role: 'STUDENT' | 'STAFF') => void;
@@ -29,6 +95,8 @@ interface AuthModalProps {
   setSignupName: (name: string) => void;
   signupEmail: string;
   setSignupEmail: (email: string) => void;
+  signupPassword: string;
+  setSignupPassword: (pw: string) => void;
   signupCampus: string;
   setSignupCampus: (campus: string) => void;
   signupEnrollment: string;
@@ -49,22 +117,12 @@ interface AuthModalProps {
   setEndYear: (year: number) => void;
   signupDeptId: string;
   setSignupDeptId: (deptId: string) => void;
-  onSendSignupOtp: (e: React.FormEvent) => void;
-  onVerifySignupOtp: (e: React.FormEvent) => void;
-  // OTP state
-  otpInput: string;
-  setOtpInput: (otp: string) => void;
-  otpEmail: string;
-  activeDevOtp: string | null;
-  otpCountdown: number;
-  resendCooldown: number;
-  // Fastpass & Logout
-  onSwitchPersona: (email: string) => void;
+  onSignup: (e: React.FormEvent) => void;
   onLogout: () => void;
 }
 
-const START_YEARS = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030];
-const END_YEARS = [2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035];
+const START_YEARS = [2020, 2021, 2022, 2023, 2024, 2025, 2026];
+const END_YEARS = [2024, 2025, 2026, 2027, 2028, 2029, 2030];
 
 export function AuthModal({
   show,
@@ -73,8 +131,6 @@ export function AuthModal({
   departments,
   authMode,
   setAuthMode,
-  authStep,
-  setAuthStep,
   authLoading,
   authError,
   authSuccess,
@@ -82,14 +138,18 @@ export function AuthModal({
   setAuthSuccess,
   loginEmail,
   setLoginEmail,
-  onSendLoginOtp,
-  onVerifyLoginOtp,
+  loginPassword,
+  setLoginPassword,
+  onLogin,
+  onQuickDemoLogin,
   signupRole,
   setSignupRole,
   signupName,
   setSignupName,
   signupEmail,
   setSignupEmail,
+  signupPassword,
+  setSignupPassword,
   signupCampus,
   setSignupCampus,
   signupEnrollment,
@@ -110,20 +170,12 @@ export function AuthModal({
   setEndYear,
   signupDeptId,
   setSignupDeptId,
-  onSendSignupOtp,
-  onVerifySignupOtp,
-  otpInput,
-  setOtpInput,
-  otpEmail,
-  activeDevOtp,
-  otpCountdown,
-  resendCooldown,
-  onSwitchPersona,
+  onSignup,
   onLogout
 }: AuthModalProps) {
+  const [showPassword, setShowPassword] = useState(false);
   const courseDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close course dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (courseDropdownRef.current && !courseDropdownRef.current.contains(event.target as Node)) {
@@ -138,8 +190,8 @@ export function AuthModal({
 
   return (
     <div className="auth-modal-overlay animate-fade-in" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="auth-modal-card" onClick={(e) => e.stopPropagation()}>
-        {/* Header Strip with Institutional Crest */}
+      <div className="auth-modal-card demo-auth-card" onClick={(e) => e.stopPropagation()}>
+        {/* Header Strip with Institutional Crest & Demo Badge */}
         <div className="auth-modal-header">
           <button
             type="button"
@@ -154,11 +206,16 @@ export function AuthModal({
             <img src="/campus-pulse-logo.png" alt="" />
           </div>
 
+          <div className="demo-mode-chip">
+            <Sparkles size={13} />
+            <span>DEMO AUTHENTICATION MODE</span>
+          </div>
+
           <h3 className="auth-modal-title">
-            Campus Pulse
+            Campus Pulse Authentication
           </h3>
           <p className="auth-modal-subtitle">
-            Secure campus access and identity verification
+            Secure, database-backed authentication for academic evaluation
           </p>
         </div>
 
@@ -168,39 +225,48 @@ export function AuthModal({
           <div className="auth-nav-tabs">
             <button
               type="button"
-              className={`auth-nav-tab-btn ${authMode === 'LOGIN' ? 'active' : ''}`}
+              className={`auth-nav-tab-btn ${authMode === 'DEMO' ? 'active' : ''}`}
               onClick={() => {
-                setAuthMode('LOGIN');
-                setAuthStep('FORM');
+                setAuthMode('DEMO');
                 setAuthError(null);
                 setAuthSuccess(null);
               }}
             >
-              <KeyRound size={16} /> Sign In (OTP)
+              <Sparkles size={15} /> 1-Click Demo Login
+            </button>
+            <button
+              type="button"
+              className={`auth-nav-tab-btn ${authMode === 'LOGIN' ? 'active' : ''}`}
+              onClick={() => {
+                setAuthMode('LOGIN');
+                setAuthError(null);
+                setAuthSuccess(null);
+              }}
+            >
+              <KeyRound size={15} /> Manual Sign In
             </button>
             <button
               type="button"
               className={`auth-nav-tab-btn ${authMode === 'SIGNUP' ? 'active' : ''}`}
               onClick={() => {
                 setAuthMode('SIGNUP');
-                setAuthStep('FORM');
                 setAuthError(null);
                 setAuthSuccess(null);
               }}
             >
-              <ClipboardPenLine size={16} /> Registration
+              <UserCheck size={15} /> Register User
             </button>
-            <button
-              type="button"
-              className={`auth-nav-tab-btn ${authMode === 'FASTPASS' ? 'active' : ''}`}
-              onClick={() => {
-                setAuthMode('FASTPASS');
-                setAuthError(null);
-                setAuthSuccess(null);
-              }}
-            >
-              <Zap size={16} /> Fast-Pass
-            </button>
+          </div>
+
+          {/* Demo Mode Notice Banner */}
+          <div className="demo-notice-banner">
+            <div className="demo-notice-title">
+              <ShieldCheck size={16} />
+              <span>Zero External Email Dependency</span>
+            </div>
+            <p className="demo-notice-text">
+              Email OTP delivery has been decommissioned. Log in instantly with one-click demo personas below or use database credentials with BCrypt verification.
+            </p>
           </div>
 
           {/* Feedback Alerts */}
@@ -217,622 +283,428 @@ export function AuthModal({
             </div>
           )}
 
-          {/* ─── TAB 1: REGISTRATION (SIGNUP) ───────────────────────────────── */}
-          {authMode === 'SIGNUP' && (
-            <div>
-              {authStep === 'FORM' ? (
-                <form onSubmit={onSendSignupOtp} className="auth-form auth-registration-form">
-                  {/* Institutional Role Selector */}
-                  <div>
-                    <label className="form-label" style={{ marginBottom: 6, display: 'block' }}>
-                      Institutional Role *
-                    </label>
-                    <div className="role-selector-cards">
-                      <button
-                        type="button"
-                        className={`role-card-btn ${signupRole === 'STUDENT' ? 'active' : ''}`}
-                        onClick={() => { setSignupRole('STUDENT'); setAuthError(null); }}
-                      >
-                        <span className="role-card-title"><GraduationCap size={17} /> Student</span>
-                        <span className="role-card-domain">@s.amity.edu domain</span>
-                      </button>
+          {/* ─── TAB 1: 1-CLICK DEMO LOGIN ─────────────────────────────────── */}
+          {authMode === 'DEMO' && (
+            <div className="demo-cards-container">
+              <div className="demo-cards-header">
+                <span>Select a Pre-Configured Campus Persona:</span>
+              </div>
 
-                      <button
-                        type="button"
-                        className={`role-card-btn ${signupRole === 'STAFF' ? 'active' : ''}`}
-                        onClick={() => { setSignupRole('STAFF'); setAuthError(null); }}
-                      >
-                        <span className="role-card-title"><BriefcaseBusiness size={17} /> Faculty / Staff</span>
-                        <span className="role-card-domain">@amity.edu domain</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Official Moderation Notice Banner */}
-                  <div className="moderation-warning-box">
-                    <AlertTriangle size={16} />
-                    <div>
-                      <strong>Verification policy</strong>
-                      <p>
-                        Your registration details are verified against University records before account activation.
-                      </p>
-                    </div>
-                  </div>
-
-                  <section className="auth-section">
-                    <div className="auth-section-heading">Identity</div>
-                  {/* Campus Selector */}
-                  <div className="auth-field">
-                    <label className="form-label" htmlFor="signup-campus">
-                      <School size={13} style={{ display: 'inline', marginRight: 5, verticalAlign: '-2px' }} />
-                      Amity Campus Branch *
-                    </label>
-                    <select
-                      id="signup-campus"
-                      className="form-select"
-                      value={signupCampus}
-                      onChange={(e) => {
-                        setSignupCampus(e.target.value);
-                        setAuthError(null);
-                      }}
-                      required
+              <div className="demo-role-grid">
+                {PRESET_DEMO_ACCOUNTS.map((acc) => {
+                  const Icon = acc.icon;
+                  const isCurrent = currentUser?.email === acc.email;
+                  return (
+                    <div
+                      key={acc.email}
+                      className={`demo-role-card ${isCurrent ? 'current-active' : ''}`}
                     >
-                      {AMITY_CAMPUSES.map((campus) => (
-                        <option key={campus} value={campus}>
-                          Amity University — {campus}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                      <div className="demo-card-top">
+                        <div
+                          className="demo-card-avatar"
+                          style={{ background: `${acc.accentColor}18`, color: acc.accentColor }}
+                        >
+                          <Icon size={22} />
+                        </div>
+                        <div className="demo-card-info">
+                          <div className="demo-card-title-row">
+                            <span className="demo-card-label">{acc.label}</span>
+                            {isCurrent && <span className="demo-active-badge">Active</span>}
+                          </div>
+                          <div className="demo-card-name">{acc.name}</div>
+                          <div className="demo-card-email">{acc.email}</div>
+                        </div>
+                      </div>
 
-                  {/* Full Name */}
+                      <div className="demo-card-meta">
+                        <div className="demo-card-subtext">{acc.subtext}</div>
+                        <div className="demo-card-password-row">
+                          <span className="pw-label">Password:</span>
+                          <code className="pw-code">{acc.password}</code>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="btn-demo-login"
+                        style={{ '--accent-color': acc.accentColor } as React.CSSProperties}
+                        onClick={() => onQuickDemoLogin(acc)}
+                        disabled={authLoading}
+                      >
+                        {authLoading ? 'Signing In...' : (
+                          <>
+                            <span>Sign in as {acc.name.split(' ')[0]}</span>
+                            <ArrowRight size={15} />
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Named Faculty/Student Quick Switchers */}
+              <div className="named-personas-box">
+                <span className="named-personas-title">Alternative Pre-Seeded Evaluation Personas:</span>
+                <div className="named-personas-chips">
+                  <button
+                    type="button"
+                    className="persona-chip"
+                    onClick={() => {
+                      setLoginEmail('arjun.sharma@s.amity.edu');
+                      setLoginPassword('StudentDemo2025!');
+                      setAuthMode('LOGIN');
+                    }}
+                  >
+                    <GraduationCap size={13} /> Arjun Sharma (Student)
+                  </button>
+                  <button
+                    type="button"
+                    className="persona-chip"
+                    onClick={() => {
+                      setLoginEmail('priya.patel@amity.edu');
+                      setLoginPassword('StaffDemo2025!');
+                      setAuthMode('LOGIN');
+                    }}
+                  >
+                    <BriefcaseBusiness size={13} /> Priya Patel (IT Staff)
+                  </button>
+                  <button
+                    type="button"
+                    className="persona-chip"
+                    onClick={() => {
+                      setLoginEmail('ramesh.kumar@amity.edu');
+                      setLoginPassword('StaffDemo2025!');
+                      setAuthMode('LOGIN');
+                    }}
+                  >
+                    <BriefcaseBusiness size={13} /> Ramesh Kumar (Facilities)
+                  </button>
+                  <button
+                    type="button"
+                    className="persona-chip"
+                    onClick={() => {
+                      setLoginEmail('dr.vikram.sen@amity.edu');
+                      setLoginPassword('AdminDemo2025!');
+                      setAuthMode('LOGIN');
+                    }}
+                  >
+                    <ShieldCheck size={13} /> Dr. Vikram Sen (Admin Dean)
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ─── TAB 2: MANUAL CREDENTIAL LOGIN ────────────────────────────── */}
+          {authMode === 'LOGIN' && (
+            <form onSubmit={onLogin} className="auth-form auth-login-form">
+              {/* Quick Fill Pills */}
+              <div className="quick-fill-section">
+                <span className="quick-fill-label">Auto-Fill Credentials:</span>
+                <div className="quick-fill-pills">
+                  <button
+                    type="button"
+                    className="quick-fill-pill"
+                    onClick={() => {
+                      setLoginEmail('demo.student@s.amity.edu');
+                      setLoginPassword('StudentDemo2025!');
+                      setAuthError(null);
+                    }}
+                  >
+                    Student
+                  </button>
+                  <button
+                    type="button"
+                    className="quick-fill-pill"
+                    onClick={() => {
+                      setLoginEmail('demo.staff@amity.edu');
+                      setLoginPassword('StaffDemo2025!');
+                      setAuthError(null);
+                    }}
+                  >
+                    Staff
+                  </button>
+                  <button
+                    type="button"
+                    className="quick-fill-pill"
+                    onClick={() => {
+                      setLoginEmail('demo.admin@amity.edu');
+                      setLoginPassword('AdminDemo2025!');
+                      setAuthError(null);
+                    }}
+                  >
+                    Admin
+                  </button>
+                </div>
+              </div>
+
+              <div className="auth-field">
+                <label className="form-label" htmlFor="login-email">
+                  Amity Institutional Email *
+                </label>
+                <div className="input-with-icon">
+                  <Mail size={16} className="input-icon" />
+                  <input
+                    id="login-email"
+                    type="email"
+                    className="form-input with-left-icon"
+                    placeholder="demo.student@s.amity.edu"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="auth-field">
+                <label className="form-label" htmlFor="login-password">
+                  Account Password *
+                </label>
+                <div className="input-with-icon">
+                  <Lock size={16} className="input-icon" />
+                  <input
+                    id="login-password"
+                    type={showPassword ? 'text' : 'password'}
+                    className="form-input with-left-icon with-right-icon"
+                    placeholder="Enter password"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    onClick={() => setShowPassword(!showPassword)}
+                    tabIndex={-1}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={authLoading}
+                style={{ padding: 13, justifyContent: 'center', marginTop: 4 }}
+              >
+                {authLoading ? 'Verifying Credentials...' : <>Sign In <ArrowRight size={16} /></>}
+              </button>
+
+              <div className="demo-credentials-helper">
+                <div className="helper-title">Demo Password Reference</div>
+                <div className="helper-grid">
+                  <div><span>Student:</span> <code>StudentDemo2025!</code></div>
+                  <div><span>Staff:</span> <code>StaffDemo2025!</code></div>
+                  <div><span>Admin:</span> <code>AdminDemo2025!</code></div>
+                </div>
+              </div>
+            </form>
+          )}
+
+          {/* ─── TAB 3: DIRECT REGISTRATION ────────────────────────────────── */}
+          {authMode === 'SIGNUP' && (
+            <form onSubmit={onSignup} className="auth-form auth-registration-form">
+              <div>
+                <label className="form-label" style={{ marginBottom: 6, display: 'block' }}>
+                  Institutional Role *
+                </label>
+                <div className="role-selector-cards">
+                  <button
+                    type="button"
+                    className={`role-card-btn ${signupRole === 'STUDENT' ? 'active' : ''}`}
+                    onClick={() => { setSignupRole('STUDENT'); setAuthError(null); }}
+                  >
+                    <span className="role-card-title"><GraduationCap size={17} /> Student</span>
+                    <span className="role-card-domain">@s.amity.edu</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`role-card-btn ${signupRole === 'STAFF' ? 'active' : ''}`}
+                    onClick={() => { setSignupRole('STAFF'); setAuthError(null); }}
+                  >
+                    <span className="role-card-title"><BriefcaseBusiness size={17} /> Faculty / Staff</span>
+                    <span className="role-card-domain">@amity.edu</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="auth-field">
+                <label className="form-label" htmlFor="signup-name">Full Legal Name *</label>
+                <input
+                  id="signup-name"
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. Rahul Sharma"
+                  value={signupName}
+                  onChange={(e) => setSignupName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="auth-field">
+                <label className="form-label" htmlFor="signup-email">
+                  {signupRole === 'STUDENT' ? 'Student Email (@s.amity.edu) *' : 'Staff Email (@amity.edu) *'}
+                </label>
+                <input
+                  id="signup-email"
+                  type="email"
+                  className="form-input"
+                  placeholder={signupRole === 'STUDENT' ? 'rahul.sharma@s.amity.edu' : 'rahul.sharma@amity.edu'}
+                  value={signupEmail}
+                  onChange={(e) => setSignupEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="auth-field">
+                <label className="form-label" htmlFor="signup-password">
+                  Account Password *
+                </label>
+                <input
+                  id="signup-password"
+                  type="password"
+                  className="form-input"
+                  placeholder="Choose a password (min 6 chars)"
+                  value={signupPassword}
+                  onChange={(e) => setSignupPassword(e.target.value)}
+                  required
+                  minLength={6}
+                />
+              </div>
+
+              <div className="auth-field">
+                <label className="form-label" htmlFor="signup-campus">Amity Campus *</label>
+                <select
+                  id="signup-campus"
+                  className="form-select"
+                  value={signupCampus}
+                  onChange={(e) => setSignupCampus(e.target.value)}
+                >
+                  {AMITY_CAMPUSES.map((c) => (
+                    <option key={c} value={c}>Amity University — {c}</option>
+                  ))}
+                </select>
+              </div>
+
+              {signupRole === 'STUDENT' && (
+                <>
                   <div className="auth-field">
-                    <label className="form-label" htmlFor="signup-name">Full Legal Name *</label>
+                    <label className="form-label" htmlFor="signup-enrollment">Amity Enrollment Number *</label>
                     <input
-                      id="signup-name"
+                      id="signup-enrollment"
                       type="text"
                       className="form-input"
-                      placeholder="e.g. Arjun Sharma"
-                      value={signupName}
-                      onChange={(e) => setSignupName(e.target.value)}
+                      placeholder="e.g. A2305220099"
+                      value={signupEnrollment}
+                      onChange={(e) => setSignupEnrollment(e.target.value.toUpperCase())}
                       required
                     />
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 3, display: 'block' }}>
-                      As printed on your Amity University ID Card.
-                    </span>
                   </div>
 
-                  {/* Institutional Email */}
-                  <div className="auth-field">
-                    <label className="form-label" htmlFor="signup-email">
-                      Official Amity Email * ({signupRole === 'STUDENT' ? '@s.amity.edu' : '@amity.edu'})
-                    </label>
-                    <input
-                      id="signup-email"
-                      type="email"
-                      className="form-input"
-                      placeholder={signupRole === 'STUDENT' ? 'name@s.amity.edu' : 'name@amity.edu'}
-                      value={signupEmail}
-                      onChange={(e) => setSignupEmail(e.target.value)}
-                      required
-                    />
-                    {signupRole === 'STUDENT' && signupEmail && !signupEmail.toLowerCase().endsWith('@s.amity.edu') && (
-                      <span className="auth-field-alert">
-                        <AlertTriangle size={14} /> Student emails must strictly end with @s.amity.edu
-                      </span>
-                    )}
-                    {signupRole === 'STAFF' && signupEmail && (!signupEmail.toLowerCase().endsWith('@amity.edu') || signupEmail.toLowerCase().endsWith('@s.amity.edu')) && (
-                      <span className="auth-field-alert">
-                        <AlertTriangle size={14} /> Faculty/Staff emails must end with @amity.edu (not @s.amity.edu)
-                      </span>
-                    )}
-                  </div>
-                  </section>
-
-                  {/* Student Specific Fields */}
-                  {signupRole === 'STUDENT' && (
-                    <section className="auth-section">
-                      <div className="auth-section-heading">Academic record</div>
-                      {/* Enrollment Number starting with 'A' */}
-                      <div className="auth-field">
-                        <label className="form-label" htmlFor="signup-enrollment">
-                          Amity Enrollment Number * (Must begin with 'A')
-                        </label>
-                        <input
-                          id="signup-enrollment"
-                          type="text"
-                          className="form-input"
-                          placeholder="e.g. A2305220001"
-                          value={signupEnrollment}
-                          onChange={(e) => setSignupEnrollment(e.target.value.toUpperCase())}
-                          required
-                          style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}
-                        />
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 3, display: 'block' }}>
-                          All official Amity enrollment numbers begin with the letter 'A'.
-                        </span>
-                      </div>
-
-                      {/* Searchable Course Combobox */}
-                      <div className="course-combobox-wrapper" ref={courseDropdownRef}>
-                        <label className="form-label" htmlFor="signup-course-search">
-                          Course / Academic Program * (Official Catalog Only)
-                        </label>
-                        <div className="course-search-input-box">
-                          <Search size={15} className="course-search-icon" />
-                          <input
-                            id="signup-course-search"
-                            type="text"
-                            className="course-search-input"
-                            placeholder="Type course name (e.g. B.Tech, BCA, MBA, Law)..."
-                            value={courseSearchQuery}
-                            onFocus={() => setIsCourseDropdownOpen(true)}
-                            onChange={(e) => {
-                              setCourseSearchQuery(e.target.value);
-                              setIsCourseDropdownOpen(true);
-                              const exact = filteredCourses.find(
-                                (c) => c.name.toLowerCase() === e.target.value.trim().toLowerCase()
-                              );
-                              if (exact) {
-                                setSelectedCourse(exact);
-                                setEndYear(startYear + Math.max(1, Math.round(exact.durationYears)));
-                              } else {
-                                setSelectedCourse(null);
-                              }
+                  <div className="auth-field" ref={courseDropdownRef}>
+                    <label className="form-label">Degree / Course *</label>
+                    <div className="course-search-box">
+                      <Search size={15} className="course-search-icon" />
+                      <input
+                        type="text"
+                        className="form-input with-left-icon"
+                        placeholder="Search degree program..."
+                        value={courseSearchQuery}
+                        onChange={(e) => {
+                          setCourseSearchQuery(e.target.value);
+                          setIsCourseDropdownOpen(true);
+                        }}
+                        onFocus={() => setIsCourseDropdownOpen(true)}
+                      />
+                    </div>
+                    {isCourseDropdownOpen && (
+                      <div className="course-dropdown-menu">
+                        {filteredCourses.map((c) => (
+                          <div
+                            key={c.name}
+                            className={`course-option ${selectedCourse?.name === c.name ? 'selected' : ''}`}
+                            onClick={() => {
+                              setSelectedCourse(c);
+                              setCourseSearchQuery(c.name);
+                              setIsCourseDropdownOpen(false);
                             }}
-                            required
-                          />
-                        </div>
-
-                        {isCourseDropdownOpen && (
-                          <ul className="course-dropdown-list animate-fade-in">
-                            {filteredCourses.length > 0 ? (
-                              filteredCourses.map((c) => {
-                                const isOfferedAtCampus = c.campuses.includes(signupCampus);
-                                const isCurrent = selectedCourse?.name === c.name;
-                                return (
-                                  <li
-                                    key={c.name}
-                                    className={`course-dropdown-item ${isCurrent ? 'selected' : ''}`}
-                                    onClick={() => {
-                                      setSelectedCourse(c);
-                                      setCourseSearchQuery(c.name);
-                                      setIsCourseDropdownOpen(false);
-                                      setEndYear(startYear + Math.max(1, Math.round(c.durationYears)));
-                                      setAuthError(null);
-                                    }}
-                                  >
-                                    <div className="course-dropdown-name">{c.name}</div>
-                                    <div className="course-dropdown-meta">
-                                      <span>Duration: {c.durationYears} Years</span>
-                                      <span className="course-availability" style={{ color: isOfferedAtCampus ? 'var(--success)' : '#CF1322' }}>
-                                        {isOfferedAtCampus ? <CheckCircle2 size={13} /> : <X size={13} />} {isOfferedAtCampus ? `Offered at ${signupCampus}` : `Not at ${signupCampus}`}
-                                      </span>
-                                    </div>
-                                  </li>
-                                );
-                              })
-                            ) : (
-                              <li style={{ padding: '12px 16px', color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center' }}>
-                                No official Amity course matches "{courseSearchQuery}".
-                              </li>
-                            )}
-                          </ul>
-                        )}
-
-                        {selectedCourse ? (
-                          <div className="course-selected-pill">
-                            <div style={{ fontSize: '0.78rem', color: 'var(--ink-primary)' }}>
-                              Selected: <strong>{selectedCourse.name}</strong>
-                              <span style={{ display: 'block', color: 'var(--gold-deep)', fontSize: '0.72rem' }}>
-                                Required Duration: {selectedCourse.durationYears} Years • Campuses: {selectedCourse.campuses.length}
-                              </span>
-                            </div>
-                            <Check size={16} color="var(--success)" />
+                          >
+                            <span>{c.name}</span>
+                            {selectedCourse?.name === c.name && <Check size={14} />}
                           </div>
-                        ) : (
-                          <span style={{ fontSize: '0.72rem', color: 'var(--warning)', marginTop: 4, display: 'block' }}>
-                            <AlertTriangle size={14} /> Please click a course from the search list to select it.
-                          </span>
-                        )}
-
-                        {/* Campus Availability Alert */}
-                        {!isCampusValid && selectedCourse && (
-                          <div className="campus-mismatch-alert animate-fade-in">
-                            <AlertTriangle size={16} color="#CF1322" style={{ flexShrink: 0, marginTop: 2 }} />
-                            <div>
-                              <strong style={{ color: '#820014' }}>Course Not Available at this Campus:</strong>
-                              <p style={{ margin: '2px 0 0', fontSize: '0.75rem' }}>
-                                "{selectedCourse.name}" is not offered at the <strong>{signupCampus}</strong> branch. Offered at: {selectedCourse.campuses.join(', ')}.
-                              </p>
-                            </div>
-                          </div>
-                        )}
+                        ))}
                       </div>
+                    )}
+                    {selectedCourse && !isCampusValid && (
+                      <span style={{ fontSize: '0.72rem', color: '#D97706', marginTop: 4, display: 'block' }}>
+                        Note: Course may not be offered at {signupCampus} campus.
+                      </span>
+                    )}
+                  </div>
 
-                      {/* Dual Year Selectors */}
-                      <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
-                          <label className="form-label" style={{ marginBottom: 0 }}>Course Batch Years *</label>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--gold-deep)', fontFamily: 'var(--font-mono)' }}>
-                            Batch: {startYear}–{endYear} ({selectedDuration} Yrs)
-                          </span>
-                        </div>
-
-                        <div className="dual-year-grid">
-                          <div>
-                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: 3 }}>
-                              Start Year
-                            </span>
-                            <select
-                              className="form-select"
-                              value={startYear}
-                              onChange={(e) => {
-                                const s = parseInt(e.target.value, 10);
-                                setStartYear(s);
-                                if (selectedCourse) {
-                                  setEndYear(s + Math.max(1, Math.round(selectedCourse.durationYears)));
-                                }
-                              }}
-                            >
-                              {START_YEARS.map((y) => (
-                                <option key={y} value={y}>{y}</option>
-                              ))}
-                            </select>
-                          </div>
-
-                          <div>
-                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: 3 }}>
-                              End Year
-                            </span>
-                            <select
-                              className="form-select"
-                              value={endYear}
-                              onChange={(e) => setEndYear(parseInt(e.target.value, 10))}
-                            >
-                              {END_YEARS.map((y) => (
-                                <option key={y} value={y}>{y}</option>
-                              ))}
-                            </select>
-                          </div>
-                        </div>
-
-                        {/* Duration Mismatch Alert with Auto-align */}
-                        {!isDurationValid && selectedCourse && (
-                          <div className="duration-mismatch-alert animate-fade-in">
-                            <AlertTriangle size={16} color="var(--warning)" style={{ flexShrink: 0, marginTop: 2 }} />
-                            <div>
-                              <strong>Batch Duration Mismatch:</strong>
-                              <p style={{ margin: '2px 0 0', fontSize: '0.75rem' }}>
-                                Selected duration is {selectedDuration} year(s) ({startYear}–{endYear}), but <strong>{selectedCourse.name}</strong> requires exactly <strong>{selectedCourse.durationYears} year(s)</strong>.
-                                <br />
-                                <button
-                                  type="button"
-                                  onClick={() => setEndYear(startYear + Math.max(1, Math.round(selectedCourse.durationYears)))}
-                                  style={{
-                                    background: 'transparent',
-                                    border: 'none',
-                                    color: 'var(--gold-deep)',
-                                    textDecoration: 'underline',
-                                    cursor: 'pointer',
-                                    padding: 0,
-                                    fontSize: '0.75rem',
-                                    fontWeight: 700,
-                                    marginTop: 4
-                                  }}
-                                >
-                                  <Check size={14} /> Auto-align End Year to {startYear + Math.max(1, Math.round(selectedCourse.durationYears))}
-                                </button>
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </section>
-                  )}
-
-                  {/* Staff Specific Fields */}
-                  {signupRole === 'STAFF' && (
-                    <section className="auth-section">
-                      <div className="auth-section-heading">Professional details</div>
-                      <div className="auth-field">
-                      <label className="form-label" htmlFor="signup-dept">Department / Unit *</label>
+                  <div className="batch-years-row">
+                    <div className="auth-field" style={{ flex: 1 }}>
+                      <label className="form-label">Start Year</label>
                       <select
-                        id="signup-dept"
                         className="form-select"
-                        value={signupDeptId}
-                        onChange={(e) => setSignupDeptId(e.target.value)}
+                        value={startYear}
+                        onChange={(e) => setStartYear(Number(e.target.value))}
                       >
-                        {departments.map((d) => (
-                          <option key={d.id} value={d.id}>{d.name}</option>
+                        {START_YEARS.map((y) => (
+                          <option key={y} value={y}>{y}</option>
                         ))}
                       </select>
-                      </div>
-                    </section>
-                  )}
-
-                  <button
-                    type="submit"
-                    className="btn-primary"
-                    disabled={authLoading || (signupRole === 'STUDENT' && (!selectedCourse || !isCampusValid || !isDurationValid))}
-                    style={{ marginTop: 8, padding: 13, justifyContent: 'center' }}
-                  >
-                    {authLoading ? 'Generating Security OTP...' : <>Send 6-Digit OTP to Amity Email <ArrowRight size={16} /></>}
-                  </button>
-                </form>
-              ) : (
-                /* Step 2: OTP Verification */
-                <form onSubmit={onVerifySignupOtp} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  <div style={{ textAlign: 'center' }}>
-                    <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
-                      Enter the 6-digit verification code sent to:
+                    </div>
+                    <div className="auth-field" style={{ flex: 1 }}>
+                      <label className="form-label">Graduation Year</label>
+                      <select
+                        className="form-select"
+                        value={endYear}
+                        onChange={(e) => setEndYear(Number(e.target.value))}
+                      >
+                        {END_YEARS.map((y) => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  {selectedCourse && !isDurationValid && (
+                    <span style={{ fontSize: '0.72rem', color: '#D97706', marginTop: 4, display: 'block' }}>
+                      Notice: Selected duration ({selectedDuration} yrs) differs from standard curriculum ({selectedCourse.durationYears} yrs).
                     </span>
-                    <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-primary)', fontWeight: 800, fontSize: '1.05rem', marginTop: 3 }}>
-                      {otpEmail}
-                    </div>
-                  </div>
-
-                  {/* Dev Testing OTP Pill */}
-                  {activeDevOtp && (
-                    <div className="dev-otp-pill">
-                      <span><Zap size={14} /> Dev Testing Passcode: <strong>{activeDevOtp}</strong></span>
-                      <button
-                        type="button"
-                        onClick={() => setOtpInput(activeDevOtp)}
-                        style={{
-                          background: 'var(--gold-primary)',
-                          color: '#101827',
-                          border: 'none',
-                          borderRadius: 4,
-                          padding: '3px 9px',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Auto-Fill
-                      </button>
-                    </div>
                   )}
-
-                  <div>
-                    <input
-                      type="text"
-                      maxLength={6}
-                      className="otp-digit-input"
-                      placeholder="• • • • • •"
-                      value={otpInput}
-                      onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                      autoFocus
-                      required
-                      aria-label="Enter 6-digit OTP"
-                    />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                      <span>
-                        Expires in: {Math.floor(otpCountdown / 60)}:{('0' + (otpCountdown % 60)).slice(-2)}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={onSendSignupOtp}
-                        disabled={resendCooldown > 0 || authLoading}
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: resendCooldown > 0 ? 'var(--text-muted)' : 'var(--gold-deep)',
-                          cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
-                          fontSize: '0.78rem',
-                          textDecoration: 'underline',
-                          fontWeight: 600
-                        }}
-                      >
-                        {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
-                      </button>
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="btn-primary"
-                    disabled={authLoading || otpInput.length !== 6}
-                    style={{ padding: 13, justifyContent: 'center' }}
-                  >
-                    {authLoading ? 'Verifying...' : <><CheckCircle2 size={16} /> Verify OTP & Complete Registration</>}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setAuthStep('FORM'); setAuthError(null); }}
-                    className="btn-secondary"
-                    style={{ justifyContent: 'center' }}
-                  >
-                    <ArrowLeft size={16} /> Edit Registration Details
-                  </button>
-                </form>
+                </>
               )}
-            </div>
-          )}
 
-          {/* ─── TAB 2: SIGN IN (LOGIN WITH OTP) ────────────────────────────── */}
-          {authMode === 'LOGIN' && (
-            <div>
-              {authStep === 'FORM' ? (
-                <form onSubmit={onSendLoginOtp} className="auth-form auth-login-form">
-                  <div className="auth-field">
-                    <label className="form-label" htmlFor="login-email">
-                      Registered Amity Email (@s.amity.edu or @amity.edu) *
-                    </label>
-                    <input
-                      id="login-email"
-                      type="email"
-                      className="form-input"
-                      placeholder="e.g. arjun.sharma@s.amity.edu or priya.patel@amity.edu"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      required
-                    />
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
-                      We send a secure 6-digit one-time passcode to verify your Amity account.
-                    </span>
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="btn-primary"
-                    disabled={authLoading}
-                    style={{ padding: 13, justifyContent: 'center' }}
+              {signupRole === 'STAFF' && departments.length > 0 && (
+                <div className="auth-field">
+                  <label className="form-label" htmlFor="signup-dept">Department *</label>
+                  <select
+                    id="signup-dept"
+                    className="form-select"
+                    value={signupDeptId}
+                    onChange={(e) => setSignupDeptId(e.target.value)}
                   >
-                    {authLoading ? 'Sending Sign-in Passcode...' : <>Send Sign-in Code <ArrowRight size={16} /></>}
-                  </button>
-
-                  <div className="auth-registration-link">
-                    Don't have an Amity account yet?{' '}
-                    <button
-                      type="button"
-                      onClick={() => { setAuthMode('SIGNUP'); setAuthStep('FORM'); setAuthError(null); }}
-                      style={{ background: 'transparent', border: 'none', color: 'var(--gold-deep)', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
-                    >
-                      Register as Student or Staff
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                /* Login Step 2: Enter OTP */
-                <form onSubmit={onVerifyLoginOtp} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  <div style={{ textAlign: 'center' }}>
-                    <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
-                      Enter the 6-digit sign-in passcode sent to:
-                    </span>
-                    <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-primary)', fontWeight: 800, fontSize: '1.05rem', marginTop: 3 }}>
-                      {otpEmail}
-                    </div>
-                  </div>
-
-                  {activeDevOtp && (
-                    <div className="dev-otp-pill">
-                      <span><Zap size={14} /> Dev Testing Passcode: <strong>{activeDevOtp}</strong></span>
-                      <button
-                        type="button"
-                        onClick={() => setOtpInput(activeDevOtp)}
-                        style={{
-                          background: 'var(--gold-primary)',
-                          color: '#101827',
-                          border: 'none',
-                          borderRadius: 4,
-                          padding: '3px 9px',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Auto-Fill
-                      </button>
-                    </div>
-                  )}
-
-                  <div>
-                    <input
-                      type="text"
-                      maxLength={6}
-                      className="otp-digit-input"
-                      placeholder="• • • • • •"
-                      value={otpInput}
-                      onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                      autoFocus
-                      required
-                    />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                      <span>
-                        Expires in: {Math.floor(otpCountdown / 60)}:{('0' + (otpCountdown % 60)).slice(-2)}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={onSendLoginOtp}
-                        disabled={resendCooldown > 0 || authLoading}
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: resendCooldown > 0 ? 'var(--text-muted)' : 'var(--gold-deep)',
-                          cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
-                          fontSize: '0.78rem',
-                          textDecoration: 'underline',
-                          fontWeight: 600
-                        }}
-                      >
-                        {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
-                      </button>
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="btn-primary"
-                    disabled={authLoading || otpInput.length !== 6}
-                    style={{ padding: 13, justifyContent: 'center' }}
-                  >
-                    {authLoading ? 'Verifying...' : <><CheckCircle2 size={16} /> Verify & Sign In</>}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setAuthStep('FORM'); setAuthError(null); }}
-                    className="btn-secondary"
-                    style={{ justifyContent: 'center' }}
-                  >
-                    <ArrowLeft size={16} /> Change Email
-                  </button>
-                </form>
+                    {departments.map((d) => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
+                    ))}
+                  </select>
+                </div>
               )}
-            </div>
-          )}
 
-          {/* ─── TAB 3: FAST-PASS (DEV/EVALUATION PERSONAS) ──────────────────── */}
-          {authMode === 'FASTPASS' && (
-            <div className="fastpass-content">
-              <div className="fastpass-intro">
-                <Sparkles size={16} />
-                <span>
-                  <strong>Developer / Demo Fast-Pass:</strong> Instant single-click authentication as one of the pre-configured university personas.
-                </span>
-              </div>
-
-              <div className="persona-fastpass-grid">
-                <div
-                  className="persona-fastpass-card"
-                  onClick={() => { onSwitchPersona('arjun.sharma@s.amity.edu'); onClose(); }}
-                >
-                  <strong><GraduationCap size={17} /> Arjun Sharma</strong>
-                  <span>Student • A230522001</span>
-                  <span style={{ color: 'var(--gold-deep)', fontSize: '0.72rem', fontWeight: 600 }}>B.Tech CSE (2023-2027)</span>
-                </div>
-
-                <div
-                  className="persona-fastpass-card"
-                  onClick={() => { onSwitchPersona('priya.patel@amity.edu'); onClose(); }}
-                >
-                  <strong><Monitor size={17} /> Priya Patel</strong>
-                  <span>Staff • IT & Lab Specialist</span>
-                  <span style={{ color: 'var(--info-sapphire)', fontSize: '0.72rem' }}>priya.patel@amity.edu</span>
-                </div>
-
-                <div
-                  className="persona-fastpass-card"
-                  onClick={() => { onSwitchPersona('ramesh.kumar@amity.edu'); onClose(); }}
-                >
-                  <strong><Wrench size={17} /> Ramesh Kumar</strong>
-                  <span>Staff • Facilities Maintenance</span>
-                  <span style={{ color: 'var(--info-sapphire)', fontSize: '0.72rem' }}>ramesh.kumar@amity.edu</span>
-                </div>
-
-                <div
-                  className="persona-fastpass-card"
-                  onClick={() => { onSwitchPersona('dr.vikram.sen@amity.edu'); onClose(); }}
-                >
-                  <strong><Landmark size={17} /> Dr. Vikram Sen</strong>
-                  <span>Dean • Operations & Admin</span>
-                  <span style={{ color: '#7E22CE', fontSize: '0.72rem' }}>dr.vikram.sen@amity.edu</span>
-                </div>
-              </div>
-            </div>
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={authLoading}
+                style={{ padding: 13, justifyContent: 'center' }}
+              >
+                {authLoading ? 'Registering Account...' : <>Complete Registration & Sign In <ArrowRight size={16} /></>}
+              </button>
+            </form>
           )}
 
           {/* ─── ACTIVE SESSION CARD (IF LOGGED IN) ─────────────────────────── */}
@@ -840,15 +712,9 @@ export function AuthModal({
             <div className="auth-session-card">
               <div className="auth-session-header">
                 <div>
-                  <div className="auth-session-label">
-                    Active University Session
-                  </div>
-                  <div className="auth-session-name">
-                    {currentUser.name}
-                  </div>
-                  <div className="auth-session-email">
-                    {currentUser.email}
-                  </div>
+                  <div className="auth-session-label">Active University Session</div>
+                  <div className="auth-session-name">{currentUser.name}</div>
+                  <div className="auth-session-email">{currentUser.email}</div>
                   {currentUser.enrollmentNo && (
                     <div className="auth-session-detail">
                       Enrollment: <strong style={{ color: 'var(--gold-deep)' }}>{currentUser.enrollmentNo}</strong>

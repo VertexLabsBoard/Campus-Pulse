@@ -1,7 +1,7 @@
 package com.campuspulse.api;
 
-import com.campuspulse.api.dto.AuthDtos.*;
-import com.campuspulse.api.dto.DevLoginRequest;
+import com.campuspulse.api.dto.AuthDtos.LoginRequest;
+import com.campuspulse.api.dto.AuthDtos.SignupRequest;
 import com.campuspulse.api.dto.UserDto;
 import com.campuspulse.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,43 +31,23 @@ public class AuthController {
         return ResponseEntity.ok(authService.getCurrentUserDto());
     }
 
-    @PostMapping("/signup/send-otp")
-    @Operation(summary = "Generate and send 6-digit OTP for Amity University registration")
-    public ResponseEntity<OtpResponse> signupSendOtp(@Valid @RequestBody SignupSendOtpRequest request) {
-        return ResponseEntity.ok(authService.signupSendOtp(request));
-    }
-
-    @PostMapping("/signup/verify")
-    @Operation(summary = "Verify OTP and complete Amity user registration")
-    public ResponseEntity<UserDto> signupVerify(
-            @Valid @RequestBody SignupVerifyRequest request,
+    @PostMapping("/login")
+    @Operation(summary = "Credential-based login with email and password")
+    public ResponseEntity<UserDto> login(
+            @Valid @RequestBody LoginRequest request,
             HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
-        return ResponseEntity.ok(authService.signupVerify(request, httpRequest, httpResponse));
+        UserDto user = authService.login(request, httpRequest, httpResponse);
+        return ResponseEntity.ok(user);
     }
 
-    @PostMapping("/login/send-otp")
-    @Operation(summary = "Send OTP for passwordless login with Amity email")
-    public ResponseEntity<OtpResponse> loginSendOtp(@Valid @RequestBody LoginSendOtpRequest request) {
-        return ResponseEntity.ok(authService.loginSendOtp(request));
-    }
-
-    @PostMapping("/login/verify")
-    @Operation(summary = "Verify OTP and log in with Amity email")
-    public ResponseEntity<UserDto> loginVerify(
-            @Valid @RequestBody LoginVerifyRequest request,
+    @PostMapping("/signup")
+    @Operation(summary = "Direct demo registration with institutional profile and password")
+    public ResponseEntity<UserDto> signup(
+            @Valid @RequestBody SignupRequest request,
             HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
-        return ResponseEntity.ok(authService.loginVerify(request, httpRequest, httpResponse));
-    }
-
-    @PostMapping("/dev-login")
-    @Operation(summary = "Dev-only local login (disabled in production profile)")
-    public ResponseEntity<UserDto> devLogin(
-            @Valid @RequestBody DevLoginRequest request,
-            HttpServletRequest httpRequest,
-            HttpServletResponse httpResponse) {
-        UserDto user = authService.devLogin(request.getEmail(), httpRequest, httpResponse);
+        UserDto user = authService.register(request, httpRequest, httpResponse);
         return ResponseEntity.ok(user);
     }
 

@@ -14,7 +14,7 @@ interface TopbarProps {
 const TAB_TITLES: Record<string, { title: string; subtitle: string }> = {
   feed: { title: 'Campus Issue Register', subtitle: 'Live incident log across all Amity facilities' },
   report: { title: 'Dispatch Campus Problem', subtitle: 'Report an issue in under 30 seconds' },
-  hub: { title: 'A-Block Spatial Directory', subtitle: 'Room directory, doorplates and QR dispatch' },
+  hub: { title: 'Campus Spatial Directory', subtitle: 'Room directory, doorplates and QR dispatch' },
   queue: { title: 'Technician Action Queue', subtitle: 'Work order triage and lifecycle dispatch' },
   admin: { title: "Dean's Operations Overview", subtitle: 'High-level operational metrics and workload balance' }
 };
@@ -50,15 +50,15 @@ export function Topbar({
       </div>
 
       <div className="topbar-right">
-        {/* Amity Auth Modal Trigger */}
+        {/* Auth Modal Trigger */}
         <button
           type="button"
           className="topbar-auth-btn"
           onClick={onOpenAuth}
-          title="Amity University OTP Portal & Fast-Pass"
+          title="Campus Pulse Demo Authentication Portal"
         >
           <KeyRound size={14} color="var(--gold-hover)" />
-          <span>{currentUser ? `${currentUser.name.split(' ')[0]} (${currentUser.role})` : 'Amity Auth'}</span>
+          <span>{currentUser ? `${currentUser.name.split(' ')[0]} (${currentUser.role})` : 'Demo Sign In'}</span>
           {currentUser?.enrollmentNo && (
             <span className="topbar-enrollment-tag">{currentUser.enrollmentNo}</span>
           )}

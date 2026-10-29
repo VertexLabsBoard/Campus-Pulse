@@ -1,6 +1,6 @@
 package com.campuspulse.api;
 
-import com.campuspulse.api.dto.DevLoginRequest;
+import com.campuspulse.api.dto.AuthDtos.LoginRequest;
 import com.campuspulse.domain.User;
 import com.campuspulse.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -30,6 +31,11 @@ class RoleSecurityTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
     @Autowired private UserRepository userRepository;
+    @Autowired private PasswordEncoder passwordEncoder;
+
+    private static final String STUDENT_PASSWORD = "StudentPass123!";
+    private static final String STAFF_PASSWORD = "StaffPass123!";
+    private static final String ADMIN_PASSWORD = "AdminPass123!";
 
     @BeforeEach
     void setUp() {
@@ -39,6 +45,7 @@ class RoleSecurityTest {
                 .email("student@college.edu")
                 .name("Arjun Sharma")
                 .role(User.Role.STUDENT)
+                .passwordHash(passwordEncoder.encode(STUDENT_PASSWORD))
                 .active(true)
                 .build());
 
@@ -46,6 +53,7 @@ class RoleSecurityTest {
                 .email("staff@college.edu")
                 .name("Priya Patel")
                 .role(User.Role.STAFF)
+                .passwordHash(passwordEncoder.encode(STAFF_PASSWORD))
                 .active(true)
                 .build());
 
@@ -53,6 +61,7 @@ class RoleSecurityTest {
                 .email("admin@college.edu")
                 .name("Dr. Vikram Sen")
                 .role(User.Role.ADMIN)
+                .passwordHash(passwordEncoder.encode(ADMIN_PASSWORD))
                 .active(true)
                 .build());
     }
@@ -66,11 +75,11 @@ class RoleSecurityTest {
     }
 
     @Test
-    @DisplayName("Dev login as student sets session and returns profile")
-    void devLoginSetsSession() throws Exception {
-        DevLoginRequest loginReq = new DevLoginRequest("student@college.edu");
+    @DisplayName("Credential login sets session and returns profile")
+    void loginSetsSession() throws Exception {
+        LoginRequest loginReq = new LoginRequest("student@college.edu", STUDENT_PASSWORD);
 
-        MvcResult loginResult = mockMvc.perform(post("/api/v1/auth/dev-login")
+        MvcResult loginResult = mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginReq)))
                 .andExpect(status().isOk())
@@ -87,6 +96,17 @@ class RoleSecurityTest {
                 .andExpect(jsonPath("$.email").value("student@college.edu"))
                 .andExpect(jsonPath("$.name").value("Arjun Sharma"))
                 .andExpect(jsonPath("$.role").value("STUDENT"));
+    }
+
+    @Test
+    @DisplayName("Login with wrong password returns 400")
+    void loginWithWrongPasswordRejected() throws Exception {
+        LoginRequest loginReq = new LoginRequest("student@college.edu", "WrongPassword!");
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginReq)))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -131,8 +151,8 @@ class RoleSecurityTest {
     @Test
     @DisplayName("Logout clears session")
     void logoutClearsSession() throws Exception {
-        DevLoginRequest loginReq = new DevLoginRequest("student@college.edu");
-        MvcResult loginResult = mockMvc.perform(post("/api/v1/auth/dev-login")
+        LoginRequest loginReq = new LoginRequest("student@college.edu", STUDENT_PASSWORD);
+        MvcResult loginResult = mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginReq)))
                 .andExpect(status().isOk())

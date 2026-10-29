@@ -4,7 +4,9 @@ import com.campuspulse.domain.*;
 import com.campuspulse.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,10 +23,30 @@ public class DataInitializer implements CommandLineRunner {
     private final LocationRepository locationRepository;
     private final UserRepository userRepository;
     private final SlaPolicyRepository slaPolicyRepository;
-
     private final IssueRepository issueRepository;
     private final IssueCommentRepository issueCommentRepository;
     private final IssueStatusHistoryRepository issueStatusHistoryRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    // Demo account passwords from environment variables.
+    // Safe defaults are provided for local development only; override in Render/production env.
+    @Value("${demo.student.email:demo.student@s.amity.edu}")
+    private String demoStudentEmail;
+
+    @Value("${demo.student.password:StudentDemo2025!}")
+    private String demoStudentPassword;
+
+    @Value("${demo.staff.email:demo.staff@amity.edu}")
+    private String demoStaffEmail;
+
+    @Value("${demo.staff.password:StaffDemo2025!}")
+    private String demoStaffPassword;
+
+    @Value("${demo.admin.email:demo.admin@amity.edu}")
+    private String demoAdminEmail;
+
+    @Value("${demo.admin.password:AdminDemo2025!}")
+    private String demoAdminPassword;
 
     public DataInitializer(
             DepartmentRepository departmentRepository,
@@ -34,7 +56,8 @@ public class DataInitializer implements CommandLineRunner {
             SlaPolicyRepository slaPolicyRepository,
             IssueRepository issueRepository,
             IssueCommentRepository issueCommentRepository,
-            IssueStatusHistoryRepository issueStatusHistoryRepository) {
+            IssueStatusHistoryRepository issueStatusHistoryRepository,
+            PasswordEncoder passwordEncoder) {
         this.departmentRepository = departmentRepository;
         this.buildingRepository = buildingRepository;
         this.locationRepository = locationRepository;
@@ -43,6 +66,7 @@ public class DataInitializer implements CommandLineRunner {
         this.issueRepository = issueRepository;
         this.issueCommentRepository = issueCommentRepository;
         this.issueStatusHistoryRepository = issueStatusHistoryRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -64,7 +88,7 @@ public class DataInitializer implements CommandLineRunner {
             labDept = departmentRepository.save(Department.builder().name("Lab").build());
             elecDept = departmentRepository.save(Department.builder().name("Electrical").build());
 
-            // 2. Users (Amity University)
+            // 2. Existing demo/seed users (pre-seeded with demo passwords)
             User student = userRepository.save(User.builder()
                     .email("arjun.sharma@s.amity.edu")
                     .name("Arjun Sharma")
@@ -72,6 +96,7 @@ public class DataInitializer implements CommandLineRunner {
                     .enrollmentNo("A230522001")
                     .course("B.Tech Computer Science & Engineering")
                     .batchYear("2023-2027")
+                    .passwordHash(passwordEncoder.encode(demoStudentPassword))
                     .active(true)
                     .build());
 
@@ -80,6 +105,7 @@ public class DataInitializer implements CommandLineRunner {
                     .name("Priya Patel")
                     .role(User.Role.STAFF)
                     .departmentId(itDept.getId())
+                    .passwordHash(passwordEncoder.encode(demoStaffPassword))
                     .active(true)
                     .build());
 
@@ -88,6 +114,7 @@ public class DataInitializer implements CommandLineRunner {
                     .name("Ramesh Kumar")
                     .role(User.Role.STAFF)
                     .departmentId(maintDept.getId())
+                    .passwordHash(passwordEncoder.encode(demoStaffPassword))
                     .active(true)
                     .build());
 
@@ -95,17 +122,7 @@ public class DataInitializer implements CommandLineRunner {
                     .email("dr.vikram.sen@amity.edu")
                     .name("Dr. Vikram Sen")
                     .role(User.Role.ADMIN)
-                    .active(true)
-                    .build());
-
-            // Legacy compatibility user
-            userRepository.save(User.builder()
-                    .email("student@college.edu")
-                    .name("Arjun Sharma")
-                    .role(User.Role.STUDENT)
-                    .enrollmentNo("A230522001")
-                    .course("B.Tech Computer Science & Engineering")
-                    .batchYear("2023-2027")
+                    .passwordHash(passwordEncoder.encode(demoAdminPassword))
                     .active(true)
                     .build());
 
@@ -143,22 +160,72 @@ public class DataInitializer implements CommandLineRunner {
             }
         }
 
+        // ── Demo Account Provisioning (idempotent) ──────────────────────────────
+        // These three accounts provide password-based login for all three roles.
+        // Run on every startup but only create/update if the account is absent or has no password.
+        if (itDept == null) {
+            itDept = departmentRepository.findAll().stream()
+                    .filter(d -> "IT".equals(d.getName())).findFirst().orElse(null);
+        }
+        provisionDemoAccount(
+                demoStudentEmail, "Demo Student", User.Role.STUDENT,
+                "A000000001", "B.Tech Computer Science & Engineering", "2024-2028", "Noida",
+                null, demoStudentPassword);
+        provisionDemoAccount(
+                demoStaffEmail, "Demo Staff", User.Role.STAFF,
+                null, null, null, null,
+                itDept != null ? itDept.getId() : null, demoStaffPassword);
+        provisionDemoAccount(
+                demoAdminEmail, "Demo Admin", User.Role.ADMIN,
+                null, null, null, null,
+                null, demoAdminPassword);
+
+        // Also ensure named test personas have valid passwords
+        userRepository.findByEmail("arjun.sharma@s.amity.edu").ifPresent(u -> {
+            if (u.getPasswordHash() == null || u.getPasswordHash().isBlank()) {
+                u.setPasswordHash(passwordEncoder.encode(demoStudentPassword));
+                userRepository.save(u);
+            }
+        });
+        userRepository.findByEmail("priya.patel@amity.edu").ifPresent(u -> {
+            if (u.getPasswordHash() == null || u.getPasswordHash().isBlank()) {
+                u.setPasswordHash(passwordEncoder.encode(demoStaffPassword));
+                userRepository.save(u);
+            }
+        });
+        userRepository.findByEmail("ramesh.kumar@amity.edu").ifPresent(u -> {
+            if (u.getPasswordHash() == null || u.getPasswordHash().isBlank()) {
+                u.setPasswordHash(passwordEncoder.encode(demoStaffPassword));
+                userRepository.save(u);
+            }
+        });
+        userRepository.findByEmail("dr.vikram.sen@amity.edu").ifPresent(u -> {
+            if (u.getPasswordHash() == null || u.getPasswordHash().isBlank()) {
+                u.setPasswordHash(passwordEncoder.encode(demoAdminPassword));
+                userRepository.save(u);
+            }
+        });
+
         // Seed realistic sample issues if none exist
         if (issueRepository.count() == 0) {
             log.info("Seeding realistic sample issues for campus feed...");
             User student = userRepository.findByEmail("arjun.sharma@s.amity.edu")
-                    .or(() -> userRepository.findByEmail("student@college.edu"))
+                    .or(() -> userRepository.findByEmail(demoStudentEmail))
                     .orElse(null);
-            User staffMaint = userRepository.findByEmail("ramesh.kumar@amity.edu")
-                    .or(() -> userRepository.findByEmail("staff.maint@college.edu"))
-                    .orElse(null);
-            User staffIt = userRepository.findByEmail("priya.patel@amity.edu")
-                    .or(() -> userRepository.findByEmail("staff.it@college.edu"))
-                    .orElse(null);
+            User staffMaint = userRepository.findByEmail("ramesh.kumar@amity.edu").orElse(null);
+            User staffIt = userRepository.findByEmail("priya.patel@amity.edu").orElse(null);
             Location lab103 = locationRepository.findByQrToken("qrt-a-103-lab").orElse(null);
             Location lobby = locationRepository.findByQrToken("qrt-a-g01-lobby").orElse(null);
             Location seminar = locationRepository.findByQrToken("qrt-a-201-seminar").orElse(null);
             Location washroom = locationRepository.findByQrToken("qrt-a-1-wc").orElse(null);
+
+            final Department finalItDept = itDept;
+            final Department finalMaintDept = departmentRepository.findAll().stream()
+                    .filter(d -> "Maintenance".equals(d.getName())).findFirst().orElse(null);
+            final Department finalHkDept = departmentRepository.findAll().stream()
+                    .filter(d -> "Housekeeping".equals(d.getName())).findFirst().orElse(null);
+            final Department finalElecDept = departmentRepository.findAll().stream()
+                    .filter(d -> "Electrical".equals(d.getName())).findFirst().orElse(null);
 
             if (student != null && lab103 != null && lobby != null) {
                 // Issue 1: Critical Maintenance leak
@@ -171,7 +238,7 @@ public class DataInitializer implements CommandLineRunner {
                         .severity((short) 4)
                         .safetyFlag(true)
                         .status(Issue.Status.IN_PROGRESS)
-                        .departmentId(maintDept != null ? maintDept.getId() : null)
+                        .departmentId(finalMaintDept != null ? finalMaintDept.getId() : null)
                         .assigneeId(staffMaint != null ? staffMaint.getId() : null)
                         .priorityScore(java.math.BigDecimal.valueOf(88.0))
                         .priorityLevel(Issue.PriorityLevel.CRITICAL)
@@ -185,12 +252,14 @@ public class DataInitializer implements CommandLineRunner {
                                 )
                         ))
                         .build());
-                issueCommentRepository.save(IssueComment.builder()
-                        .issueId(issue1.getId())
-                        .authorId(staffMaint.getId())
-                        .body("Caution wet floor signage placed. Shutoff valve inspected, replacing washer.")
-                        .internal(false)
-                        .build());
+                if (staffMaint != null) {
+                    issueCommentRepository.save(IssueComment.builder()
+                            .issueId(issue1.getId())
+                            .authorId(staffMaint.getId())
+                            .body("Caution wet floor signage placed. Shutoff valve inspected, replacing washer.")
+                            .internal(false)
+                            .build());
+                }
 
                 // Issue 2: Medium IT projector issue
                 Issue issue2 = issueRepository.save(Issue.builder()
@@ -202,7 +271,7 @@ public class DataInitializer implements CommandLineRunner {
                         .severity((short) 3)
                         .safetyFlag(false)
                         .status(Issue.Status.VERIFIED)
-                        .departmentId(itDept != null ? itDept.getId() : null)
+                        .departmentId(finalItDept != null ? finalItDept.getId() : null)
                         .priorityScore(java.math.BigDecimal.valueOf(45.0))
                         .priorityLevel(Issue.PriorityLevel.MEDIUM)
                         .priorityExplanation(java.util.Map.of(
@@ -215,12 +284,14 @@ public class DataInitializer implements CommandLineRunner {
                                 )
                         ))
                         .build());
-                issueCommentRepository.save(IssueComment.builder()
-                        .issueId(issue2.getId())
-                        .authorId(staffIt.getId())
-                        .body("Verified optical cable. Replacement lamp module scheduled for 4 PM.")
-                        .internal(false)
-                        .build());
+                if (staffIt != null) {
+                    issueCommentRepository.save(IssueComment.builder()
+                            .issueId(issue2.getId())
+                            .authorId(staffIt.getId())
+                            .body("Verified optical cable. Replacement lamp module scheduled for 4 PM.")
+                            .internal(false)
+                            .build());
+                }
 
                 // Issue 3: Resolved Electrical issue
                 if (seminar != null) {
@@ -233,7 +304,7 @@ public class DataInitializer implements CommandLineRunner {
                             .severity((short) 3)
                             .safetyFlag(false)
                             .status(Issue.Status.RESOLVED)
-                            .departmentId(elecDept != null ? elecDept.getId() : null)
+                            .departmentId(finalElecDept != null ? finalElecDept.getId() : null)
                             .priorityScore(java.math.BigDecimal.valueOf(52.0))
                             .priorityLevel(Issue.PriorityLevel.MEDIUM)
                             .resolvedAt(java.time.Instant.now().minusSeconds(1800))
@@ -247,12 +318,14 @@ public class DataInitializer implements CommandLineRunner {
                                     )
                             ))
                             .build());
-                    issueCommentRepository.save(IssueComment.builder()
-                            .issueId(issue3.getId())
-                            .authorId(staffIt.getId())
-                            .body("Ground loop isolator installed on podium XLR interface. Clean audio confirmed.")
-                            .internal(false)
-                            .build());
+                    if (staffIt != null) {
+                        issueCommentRepository.save(IssueComment.builder()
+                                .issueId(issue3.getId())
+                                .authorId(staffIt.getId())
+                                .body("Ground loop isolator installed on podium XLR interface. Clean audio confirmed.")
+                                .internal(false)
+                                .build());
+                    }
                 }
 
                 // Issue 4: Submitted Housekeeping issue
@@ -266,7 +339,7 @@ public class DataInitializer implements CommandLineRunner {
                             .severity((short) 2)
                             .safetyFlag(false)
                             .status(Issue.Status.SUBMITTED)
-                            .departmentId(hkDept != null ? hkDept.getId() : null)
+                            .departmentId(finalHkDept != null ? finalHkDept.getId() : null)
                             .priorityScore(java.math.BigDecimal.valueOf(25.0))
                             .priorityLevel(Issue.PriorityLevel.LOW)
                             .priorityExplanation(java.util.Map.of(
@@ -282,6 +355,48 @@ public class DataInitializer implements CommandLineRunner {
             }
         }
 
-        log.info("Campus Pulse initial data seeding completed successfully.");
+        log.info("Campus Pulse data initialization completed.");
+    }
+
+    /**
+     * Idempotent: creates the demo account if it does not exist,
+     * or sets/updates its password hash if it was previously created without one.
+     * Never overwrites an existing password or demotes an existing role.
+     */
+    private void provisionDemoAccount(
+            String email, String name, User.Role role,
+            String enrollmentNo, String course, String batchYear, String campus,
+            UUID departmentId, String rawPassword) {
+
+        userRepository.findByEmail(email).ifPresentOrElse(
+                existing -> {
+                    // Only update password hash if the account has no password yet
+                    if (existing.getPasswordHash() == null || existing.getPasswordHash().isBlank()) {
+                        existing.setPasswordHash(passwordEncoder.encode(rawPassword));
+                        userRepository.save(existing);
+                        log.info("Updated password hash for existing demo account: {}", email);
+                    }
+                    // Log a reminder if the account is inactive
+                    if (!existing.isActive()) {
+                        log.warn("Demo account {} is inactive — login will be rejected until re-activated.", email);
+                    }
+                },
+                () -> {
+                    User user = User.builder()
+                            .email(email)
+                            .name(name)
+                            .role(role)
+                            .enrollmentNo(enrollmentNo)
+                            .course(course)
+                            .batchYear(batchYear)
+                            .campus(campus)
+                            .departmentId(departmentId)
+                            .active(true)
+                            .passwordHash(passwordEncoder.encode(rawPassword))
+                            .build();
+                    userRepository.save(user);
+                    log.info("Provisioned demo account: {} ({})", email, role);
+                }
+        );
     }
 }

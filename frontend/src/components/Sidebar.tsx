@@ -107,6 +107,9 @@ export function Sidebar({
             onChange={(e) => onSwitchPersona(e.target.value)}
             aria-label="Select user persona"
           >
+            <option value="demo.student@s.amity.edu">Demo Student (Student)</option>
+            <option value="demo.staff@amity.edu">Demo Staff (IT Staff)</option>
+            <option value="demo.admin@amity.edu">Demo Admin (Operations Dean)</option>
             <option value="arjun.sharma@s.amity.edu">Arjun Sharma (Student)</option>
             <option value="priya.patel@amity.edu">Priya Patel (IT Staff)</option>
             <option value="ramesh.kumar@amity.edu">Ramesh Kumar (Facilities)</option>

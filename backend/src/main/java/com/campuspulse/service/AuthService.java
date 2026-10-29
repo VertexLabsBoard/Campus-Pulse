@@ -1,6 +1,7 @@
 package com.campuspulse.service;
 
-import com.campuspulse.api.dto.AuthDtos.*;
+import com.campuspulse.api.dto.AuthDtos.LoginRequest;
+import com.campuspulse.api.dto.AuthDtos.SignupRequest;
 import com.campuspulse.api.dto.UserDto;
 import com.campuspulse.domain.Department;
 import com.campuspulse.domain.User;
@@ -12,12 +13,11 @@ import com.campuspulse.repository.UserRepository;
 import com.campuspulse.security.UserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.core.env.Environment;
-import org.springframework.core.env.Profiles;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,138 +30,50 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
-    private final Environment environment;
     private final SecurityContextRepository securityContextRepository;
-    private final OtpService otpService;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthService(
             UserRepository userRepository,
             DepartmentRepository departmentRepository,
-            Environment environment,
             SecurityContextRepository securityContextRepository,
-            OtpService otpService) {
+            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.departmentRepository = departmentRepository;
-        this.environment = environment;
         this.securityContextRepository = securityContextRepository;
-        this.otpService = otpService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
-     * Strictly validate Amity University email domain based on persona role.
-     * Students MUST end with @s.amity.edu
-     * Staff/Faculty MUST end with @amity.edu (and not @s.amity.edu)
+     * Credential-based login: validate email + password, establish session.
+     * Never trusts a role supplied by the caller — the role comes from the database.
      */
-    public void validateAmityEmail(User.Role role, String rawEmail) {
-        if (rawEmail == null || rawEmail.trim().isEmpty()) {
-            throw new BadRequestException("Email address is required.");
-        }
-        String email = rawEmail.trim().toLowerCase();
-
-        if (role == User.Role.STUDENT) {
-            if (email.endsWith("@amity.edu") && !email.endsWith("@s.amity.edu")) {
-                throw new BadRequestException("Staff email (@amity.edu) cannot be used for student registration. Please use your student email ending with @s.amity.edu.");
-            }
-            if (!email.endsWith("@s.amity.edu")) {
-                throw new BadRequestException("Only official Amity University student emails ending with @s.amity.edu are permitted.");
-            }
-        } else if (role == User.Role.STAFF || role == User.Role.ADMIN) {
-            if (email.endsWith("@s.amity.edu")) {
-                throw new BadRequestException("Student email (@s.amity.edu) cannot be used for staff registration. Please use your faculty/staff email ending with @amity.edu.");
-            }
-            if (!email.endsWith("@amity.edu")) {
-                throw new BadRequestException("Only official Amity University staff/faculty emails ending with @amity.edu are permitted.");
-            }
-        }
-    }
-
-    /**
-     * Validate Amity enrollment number (must start with letter 'A')
-     */
-    public String validateEnrollmentNo(String rawEnrollmentNo) {
-        if (rawEnrollmentNo == null || rawEnrollmentNo.trim().isEmpty()) {
-            throw new BadRequestException("Enrollment number is required for students.");
-        }
-        String clean = rawEnrollmentNo.trim().toUpperCase();
-        if (!clean.startsWith("A")) {
-            throw new BadRequestException("Amity enrollment number must start with the letter 'A' (e.g., A2305220001).");
-        }
-        if (clean.length() < 4) {
-            throw new BadRequestException("Enrollment number is too short. Please enter a valid Amity enrollment number.");
-        }
-        return clean;
-    }
-
     @Transactional
-    public OtpResponse signupSendOtp(SignupSendOtpRequest req) {
-        validateAmityEmail(req.getRole(), req.getEmail());
+    public UserDto login(LoginRequest req, HttpServletRequest request, HttpServletResponse response) {
+        if (req.getEmail() == null || req.getEmail().trim().isEmpty()) {
+            throw new BadRequestException("Email is required.");
+        }
+        if (req.getPassword() == null || req.getPassword().trim().isEmpty()) {
+            throw new BadRequestException("Password is required.");
+        }
+
         String email = req.getEmail().trim().toLowerCase();
 
-        if (userRepository.existsByEmail(email)) {
-            throw new BadRequestException("An account with Amity email '" + email + "' already exists. Please sign in instead.");
+        // Generic error message: never reveal whether an account exists
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadRequestException("Invalid email or password."));
+
+        if (!user.isActive()) {
+            throw new ForbiddenException("Your account has been disabled. Please contact the administrator.");
         }
 
-        if (req.getRole() == User.Role.STUDENT) {
-            validateEnrollmentNo(req.getEnrollmentNo());
-            if (req.getCourse() == null || req.getCourse().trim().isEmpty()) {
-                throw new BadRequestException("Course of study is required for student registration.");
-            }
-            if (req.getBatchYear() == null || req.getBatchYear().trim().isEmpty()) {
-                throw new BadRequestException("Course batch year (e.g. 2024-2028) is required for student registration.");
-            }
+        if (user.getPasswordHash() == null || user.getPasswordHash().isBlank()) {
+            throw new BadRequestException("This account has no password set. Please contact the administrator.");
         }
 
-        String otp = otpService.generateOtp(email, "SIGNUP");
-        return new OtpResponse(
-                "Verification code sent to " + email + ". Valid for 10 minutes.",
-                email,
-                otp,
-                600
-        );
-    }
-
-    @Transactional
-    public UserDto signupVerify(SignupVerifyRequest req, HttpServletRequest request, HttpServletResponse response) {
-        validateAmityEmail(req.getRole(), req.getEmail());
-        String email = req.getEmail().trim().toLowerCase();
-
-        if (userRepository.existsByEmail(email)) {
-            throw new BadRequestException("An account with Amity email '" + email + "' already exists.");
+        if (!passwordEncoder.matches(req.getPassword(), user.getPasswordHash())) {
+            throw new BadRequestException("Invalid email or password.");
         }
-
-        String enrollmentNo = null;
-        String course = null;
-        String batchYear = null;
-
-        if (req.getRole() == User.Role.STUDENT) {
-            enrollmentNo = validateEnrollmentNo(req.getEnrollmentNo());
-            if (req.getCourse() == null || req.getCourse().trim().isEmpty()) {
-                throw new BadRequestException("Course of study is required.");
-            }
-            course = req.getCourse().trim();
-            if (req.getBatchYear() == null || req.getBatchYear().trim().isEmpty()) {
-                throw new BadRequestException("Course batch year is required.");
-            }
-            batchYear = req.getBatchYear().trim();
-        }
-
-        // Verify OTP
-        otpService.verifyOtp(email, "SIGNUP", req.getOtp());
-
-        // Create user entity
-        User user = User.builder()
-                .email(email)
-                .name(req.getName().trim())
-                .role(req.getRole())
-                .enrollmentNo(enrollmentNo)
-                .course(course)
-                .batchYear(batchYear)
-                .campus(req.getCampus() != null ? req.getCampus().trim() : null)
-                .departmentId(req.getRole() == User.Role.STAFF ? req.getDepartmentId() : null)
-                .active(true)
-                .build();
-
-        user = userRepository.save(user);
 
         // Establish authenticated session
         establishSession(user, request, response);
@@ -170,50 +82,28 @@ public class AuthService {
         return UserDto.from(user, deptName);
     }
 
-    @Transactional(readOnly = true)
-    public OtpResponse loginSendOtp(LoginSendOtpRequest req) {
-        if (req.getEmail() == null || req.getEmail().trim().isEmpty()) {
-            throw new BadRequestException("Amity email is required.");
-        }
-        String email = req.getEmail().trim().toLowerCase();
-
-        if (!email.endsWith("@s.amity.edu") && !email.endsWith("@amity.edu")) {
-            throw new BadRequestException("Only Amity University email addresses (@s.amity.edu or @amity.edu) are eligible to sign in.");
-        }
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new BadRequestException("No registered account found for '" + email + "'. Please sign up first."));
-
-        if (!user.isActive()) {
-            throw new ForbiddenException("Your Amity account has been disabled. Please contact the administrator.");
-        }
-
-        String otp = otpService.generateOtp(email, "LOGIN");
-        return new OtpResponse(
-                "Sign-in verification code sent to " + email + ". Valid for 10 minutes.",
-                email,
-                otp,
-                600
-        );
-    }
-
     @Transactional
-    public UserDto loginVerify(LoginVerifyRequest req, HttpServletRequest request, HttpServletResponse response) {
-        if (req.getEmail() == null || req.getEmail().trim().isEmpty()) {
-            throw new BadRequestException("Amity email is required.");
-        }
+    public UserDto register(SignupRequest req, HttpServletRequest request, HttpServletResponse response) {
         String email = req.getEmail().trim().toLowerCase();
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new BadRequestException("No registered account found for '" + email + "'."));
-
-        if (!user.isActive()) {
-            throw new ForbiddenException("Account is disabled.");
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new BadRequestException("An account with this email address already exists.");
         }
 
-        otpService.verifyOtp(email, "LOGIN", req.getOtp());
+        User user = User.builder()
+                .name(req.getName().trim())
+                .email(email)
+                .role(req.getRole() != null ? req.getRole() : User.Role.STUDENT)
+                .campus(req.getCampus() != null ? req.getCampus() : "Noida")
+                .enrollmentNo(req.getEnrollmentNo())
+                .course(req.getCourse())
+                .batchYear(req.getBatchYear())
+                .departmentId(req.getDepartmentId())
+                .passwordHash(passwordEncoder.encode(req.getPassword()))
+                .active(true)
+                .build();
 
-        // Establish authenticated session
+        user = userRepository.save(user);
+
         establishSession(user, request, response);
 
         String deptName = getDepartmentName(user.getDepartmentId());
@@ -234,40 +124,6 @@ public class AuthService {
     private String getDepartmentName(UUID deptId) {
         if (deptId == null) return null;
         return departmentRepository.findById(deptId).map(Department::getName).orElse(null);
-    }
-
-    @Transactional
-    public UserDto devLogin(String email, HttpServletRequest request, HttpServletResponse response) {
-        if (environment.acceptsProfiles(Profiles.of("prod"))) {
-            throw new ForbiddenException("Dev login is disabled in production");
-        }
-
-        User user = userRepository.findByEmail(email).orElseGet(() -> {
-            String roleName = email.contains("admin") ? "ADMIN" :
-                             (email.contains("staff") ? "STAFF" : "STUDENT");
-            User.Role role = User.Role.valueOf(roleName);
-            String name = email.split("@")[0].replace(".", " ");
-            name = Character.toUpperCase(name.charAt(0)) + name.substring(1);
-
-            return userRepository.save(User.builder()
-                    .email(email)
-                    .name(name)
-                    .role(role)
-                    .enrollmentNo(role == User.Role.STUDENT ? "A230522001" : null)
-                    .course(role == User.Role.STUDENT ? "B.Tech Computer Science & Engineering" : null)
-                    .batchYear(role == User.Role.STUDENT ? "2023-2027" : null)
-                    .active(true)
-                    .build());
-        });
-
-        if (!user.isActive()) {
-            throw new ForbiddenException("User account is disabled");
-        }
-
-        establishSession(user, request, response);
-
-        String deptName = getDepartmentName(user.getDepartmentId());
-        return UserDto.from(user, deptName);
     }
 
     public UserPrincipal getCurrentPrincipal() {
