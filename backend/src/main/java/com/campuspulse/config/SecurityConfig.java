@@ -11,6 +11,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
@@ -33,6 +35,11 @@ public class SecurityConfig {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
     public SecurityContextRepository securityContextRepository() {
         return new HttpSessionSecurityContextRepository();
     }
@@ -52,9 +59,8 @@ public class SecurityConfig {
                 // Public endpoints
                 .requestMatchers(
                     "/api/v1/health",
-                    "/api/v1/auth/signup/**",
-                    "/api/v1/auth/login/**",
-                    "/api/v1/auth/dev-login",
+                    "/api/v1/auth/login",
+                    "/api/v1/auth/signup",
                     "/api/v1/auth/logout",
                     "/api/v1/locations/**",
                     "/api/v1/buildings/**",

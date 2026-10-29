@@ -46,14 +46,14 @@ export function App() {
   const [showQrPrintModal, setShowQrPrintModal] = useState(false);
   const [departments, setDepartments] = useState<DepartmentItem[]>([]);
 
-  // Auth Modal Tab & Flow State
-  const [authMode, setAuthMode] = useState<'LOGIN' | 'SIGNUP' | 'FASTPASS'>('LOGIN');
-  const [authStep, setAuthStep] = useState<'FORM' | 'OTP'>('FORM');
+  // Auth Modal State (Demo Authentication System)
+  const [authMode, setAuthMode] = useState<'DEMO' | 'LOGIN' | 'SIGNUP'>('DEMO');
 
   // Signup fields
   const [signupRole, setSignupRole] = useState<'STUDENT' | 'STAFF'>('STUDENT');
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
+  const [signupPassword, setSignupPassword] = useState('DemoPass2025!');
   const [signupCampus, setSignupCampus] = useState('Noida');
   const [signupEnrollment, setSignupEnrollment] = useState('');
 
@@ -75,14 +75,10 @@ export function App() {
   const [signupDeptId, setSignupDeptId] = useState('');
 
   // Login fields
-  const [loginEmail, setLoginEmail] = useState('');
+  const [loginEmail, setLoginEmail] = useState('demo.student@s.amity.edu');
+  const [loginPassword, setLoginPassword] = useState('StudentDemo2025!');
 
-  // OTP Verification state
-  const [otpInput, setOtpInput] = useState('');
-  const [otpEmail, setOtpEmail] = useState('');
-  const [activeDevOtp, setActiveDevOtp] = useState<string | null>(null);
-  const [otpCountdown, setOtpCountdown] = useState(600);
-  const [resendCooldown, setResendCooldown] = useState(0);
+  // Feedback & Loading
   const [authError, setAuthError] = useState<string | null>(null);
   const [authSuccess, setAuthSuccess] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
@@ -110,27 +106,6 @@ export function App() {
     }
     return selectedDuration === required;
   }, [selectedCourse, selectedDuration]);
-
-  // OTP Countdown Timers
-  useEffect(() => {
-    let timer: any;
-    if (authStep === 'OTP' && otpCountdown > 0) {
-      timer = setInterval(() => {
-        setOtpCountdown((prev) => (prev > 0 ? prev - 1 : 0));
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [authStep, otpCountdown]);
-
-  useEffect(() => {
-    let timer: any;
-    if (resendCooldown > 0) {
-      timer = setInterval(() => {
-        setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [resendCooldown]);
 
   // Initial load
   useEffect(() => {
@@ -194,11 +169,11 @@ export function App() {
         const data = await res.json();
         setCurrentUser(data);
       } else {
-        // Auto sign in as Amity student for instant first load
-        switchPersona('arjun.sharma@s.amity.edu');
+        // Auto sign in as Amity demo student for instant first load
+        switchPersona('demo.student@s.amity.edu');
       }
     } catch {
-      switchPersona('arjun.sharma@s.amity.edu');
+      switchPersona('demo.student@s.amity.edu');
     }
   }
 
@@ -213,14 +188,27 @@ export function App() {
     }
   }
 
+  // Get default password for a demo email
+  function getDemoPasswordForEmail(email: string): string {
+    const lower = email.toLowerCase();
+    if (lower.includes('admin') || lower.includes('dr.vikram.sen')) {
+      return 'AdminDemo2025!';
+    }
+    if (lower.includes('staff') || lower.includes('priya.patel') || lower.includes('ramesh.kumar')) {
+      return 'StaffDemo2025!';
+    }
+    return 'StudentDemo2025!';
+  }
+
   async function switchPersona(email: string) {
     try {
       setLoading(true);
-      const res = await fetch('/api/v1/auth/dev-login', {
+      const password = getDemoPasswordForEmail(email);
+      const res = await fetch('/api/v1/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email, password })
       });
       if (res.ok) {
         const user = await res.json();
@@ -236,14 +224,90 @@ export function App() {
     }
   }
 
-  // Amity Signup: Step 1 Send OTP
-  async function handleSendSignupOtp(e: React.FormEvent) {
+  // 1-Click Quick Demo Login
+  async function handleQuickDemoLogin(account: { email: string; password: string; name: string; role: string }) {
+    setAuthError(null);
+    setAuthSuccess(null);
+    setAuthLoading(true);
+
+    try {
+      const res = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email: account.email, password: account.password })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setAuthError(data.message || 'Demo login failed.');
+        return;
+      }
+
+      setCurrentUser(data);
+      setShowAuthModal(false);
+      showToast(`Signed in as ${data.name} (${data.role})`);
+      loadIssues();
+      loadNotifications();
+    } catch {
+      setAuthError('Network error connecting to campus auth server.');
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
+  // Manual Credential-Based Sign In
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setAuthError(null);
+    setAuthSuccess(null);
+
+    const cleanEmail = loginEmail.trim().toLowerCase();
+    if (!cleanEmail) {
+      setAuthError('Please enter your registered Amity email.');
+      return;
+    }
+
+    if (!loginPassword) {
+      setAuthError('Please enter your password.');
+      return;
+    }
+
+    try {
+      setAuthLoading(true);
+      const res = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email: cleanEmail, password: loginPassword })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setAuthError(data.message || 'Invalid email or password.');
+        return;
+      }
+
+      setCurrentUser(data);
+      setShowAuthModal(false);
+      showToast(`Welcome back, ${data.name}!`);
+      loadIssues();
+      loadNotifications();
+    } catch {
+      setAuthError('Network error communicating with authentication service.');
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
+  // Direct Registration (No OTP)
+  async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
     setAuthError(null);
     setAuthSuccess(null);
 
     if (!signupName.trim()) {
-      setAuthError('Please enter your actual full name as registered on Amity Student/Staff ID.');
+      setAuthError('Please enter your full name.');
       return;
     }
 
@@ -253,13 +317,18 @@ export function App() {
       return;
     }
 
+    if (!signupPassword || signupPassword.length < 6) {
+      setAuthError('Password must be at least 6 characters long.');
+      return;
+    }
+
     if (signupRole === 'STUDENT') {
       if (cleanEmail.endsWith('@amity.edu') && !cleanEmail.endsWith('@s.amity.edu')) {
         setAuthError('Staff email (@amity.edu) cannot be used for student registration. Please use your student email (@s.amity.edu).');
         return;
       }
       if (!cleanEmail.endsWith('@s.amity.edu')) {
-        setAuthError('Student registration strictly requires an official Amity email ending with @s.amity.edu to prevent unauthorized botting.');
+        setAuthError('Student registration requires an official Amity email ending with @s.amity.edu.');
         return;
       }
 
@@ -268,34 +337,19 @@ export function App() {
         setAuthError('Please enter your Amity Enrollment Number.');
         return;
       }
-      if (!cleanEnroll.startsWith('A')) {
-        setAuthError('All Amity enrollment numbers must begin with the letter "A" (e.g., A2305220001).');
-        return;
-      }
 
       if (!selectedCourse) {
-        setAuthError('Please search and select a recognized Amity University course from the dropdown (no other or custom courses are permitted).');
-        return;
-      }
-
-      if (!isCampusValid) {
-        setAuthError(`This course is not available at the ${signupCampus} campus. Please recheck your campus selection or contact admissions support at admissions-help@amity.edu.`);
+        setAuthError('Please search and select a recognized Amity University course.');
         return;
       }
 
       if (endYear <= startYear) {
-        setAuthError('Course Batch End Year must be strictly after the Start Year.');
-        return;
-      }
-
-      if (!isDurationValid) {
-        setAuthError(`Batch duration mismatch: You selected ${selectedDuration} years (${startYear}–${endYear}), but ${selectedCourse.name} requires ${selectedCourse.durationYears} year(s). Please align your batch years.`);
+        setAuthError('Graduation year must be strictly after the start year.');
         return;
       }
     } else {
-      // Staff
       if (cleanEmail.endsWith('@s.amity.edu')) {
-        setAuthError('Student email (@s.amity.edu) cannot be used for faculty/staff registration. Please use your staff email (@amity.edu).');
+        setAuthError('Student email (@s.amity.edu) cannot be used for faculty/staff registration.');
         return;
       }
       if (!cleanEmail.endsWith('@amity.edu')) {
@@ -312,67 +366,15 @@ export function App() {
         role: signupRole,
         name: signupName.trim(),
         email: cleanEmail,
-        campus: signupCampus,
-        enrollmentNo: signupRole === 'STUDENT' ? signupEnrollment.trim().toUpperCase() : undefined,
-        course: signupRole === 'STUDENT' ? selectedCourse?.name : undefined,
-        batchYear: signupRole === 'STUDENT' ? effectiveBatch : undefined,
-        departmentId: signupRole === 'STAFF' && signupDeptId ? signupDeptId : undefined
-      };
-
-      const res = await fetch('/api/v1/auth/signup/send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(payload)
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setAuthError(data.message || 'Failed to send verification code.');
-        return;
-      }
-
-      setOtpEmail(cleanEmail);
-      setActiveDevOtp(data.devOtp || null);
-      setOtpInput('');
-      setAuthStep('OTP');
-      setOtpCountdown(600);
-      setResendCooldown(30);
-      setAuthSuccess(`6-digit verification code sent to ${cleanEmail}`);
-    } catch {
-      setAuthError('Network error connecting to Amity auth server.');
-    } finally {
-      setAuthLoading(false);
-    }
-  }
-
-  // Amity Signup: Step 2 Verify OTP
-  async function handleVerifySignupOtp(e: React.FormEvent) {
-    e.preventDefault();
-    setAuthError(null);
-
-    if (!otpInput.trim() || otpInput.trim().length !== 6) {
-      setAuthError('Please enter the complete 6-digit OTP code.');
-      return;
-    }
-
-    try {
-      setAuthLoading(true);
-      const effectiveBatch = `${startYear}-${endYear}`;
-
-      const payload = {
-        role: signupRole,
-        name: signupName.trim(),
-        email: otpEmail,
+        password: signupPassword,
         campus: signupCampus,
         enrollmentNo: signupRole === 'STUDENT' ? signupEnrollment.trim().toUpperCase() : undefined,
         course: signupRole === 'STUDENT' ? (selectedCourse ? selectedCourse.name : courseSearchQuery) : undefined,
         batchYear: signupRole === 'STUDENT' ? effectiveBatch : undefined,
-        departmentId: signupRole === 'STAFF' && signupDeptId ? signupDeptId : undefined,
-        otp: otpInput.trim()
+        departmentId: signupRole === 'STAFF' && signupDeptId ? signupDeptId : undefined
       };
 
-      const res = await fetch('/api/v1/auth/signup/verify', {
+      const res = await fetch('/api/v1/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -381,102 +383,17 @@ export function App() {
 
       const data = await res.json();
       if (!res.ok) {
-        setAuthError(data.message || 'OTP verification failed.');
+        setAuthError(data.message || 'Registration failed.');
         return;
       }
 
       setCurrentUser(data);
       setShowAuthModal(false);
-      setAuthStep('FORM');
-      showToast(`Welcome to Campus Pulse, ${data.name}! Verified as Amity ${data.role}`);
+      showToast(`Welcome to Campus Pulse, ${data.name}! Registered as ${data.role}`);
       loadIssues();
       loadNotifications();
     } catch {
-      setAuthError('Failed to verify OTP with campus server.');
-    } finally {
-      setAuthLoading(false);
-    }
-  }
-
-  // Amity Login: Step 1 Send OTP
-  async function handleSendLoginOtp(e: React.FormEvent) {
-    e.preventDefault();
-    setAuthError(null);
-    setAuthSuccess(null);
-
-    const cleanEmail = loginEmail.trim().toLowerCase();
-    if (!cleanEmail) {
-      setAuthError('Please enter your Amity email (@s.amity.edu or @amity.edu).');
-      return;
-    }
-
-    if (!cleanEmail.endsWith('@s.amity.edu') && !cleanEmail.endsWith('@amity.edu')) {
-      setAuthError('Only official Amity email addresses (@s.amity.edu or @amity.edu) are eligible to sign in.');
-      return;
-    }
-
-    try {
-      setAuthLoading(true);
-      const res = await fetch('/api/v1/auth/login/send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email: cleanEmail })
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setAuthError(data.message || 'Failed to send login code.');
-        return;
-      }
-
-      setOtpEmail(cleanEmail);
-      setActiveDevOtp(data.devOtp || null);
-      setOtpInput('');
-      setAuthStep('OTP');
-      setOtpCountdown(600);
-      setResendCooldown(30);
-      setAuthSuccess(`Sign-in verification code sent to ${cleanEmail}`);
-    } catch {
-      setAuthError('Network error communicating with authentication service.');
-    } finally {
-      setAuthLoading(false);
-    }
-  }
-
-  // Amity Login: Step 2 Verify OTP
-  async function handleVerifyLoginOtp(e: React.FormEvent) {
-    e.preventDefault();
-    setAuthError(null);
-
-    if (!otpInput.trim() || otpInput.trim().length !== 6) {
-      setAuthError('Please enter the 6-digit verification code.');
-      return;
-    }
-
-    try {
-      setAuthLoading(true);
-      const res = await fetch('/api/v1/auth/login/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email: otpEmail, otp: otpInput.trim() })
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setAuthError(data.message || 'Invalid or expired OTP.');
-        return;
-      }
-
-      setCurrentUser(data);
-      setShowAuthModal(false);
-      setAuthStep('FORM');
-      showToast(`Welcome back, ${data.name}!`);
-      loadIssues();
-      loadNotifications();
-    } catch {
-      setAuthError('Failed to verify OTP with campus server.');
+      setAuthError('Network error connecting to Amity auth server.');
     } finally {
       setAuthLoading(false);
     }
@@ -883,7 +800,7 @@ export function App() {
             locations={locations}
           />
 
-          {/* ─── Amity Auth & Fast-Pass Modal ──────────────────────────────── */}
+          {/* ─── Demo Authentication Modal ──────────────────────────────── */}
           <AuthModal
             show={showAuthModal}
             onClose={() => setShowAuthModal(false)}
@@ -891,8 +808,6 @@ export function App() {
             departments={departments}
             authMode={authMode}
             setAuthMode={setAuthMode}
-            authStep={authStep}
-            setAuthStep={setAuthStep}
             authLoading={authLoading}
             authError={authError}
             authSuccess={authSuccess}
@@ -900,14 +815,18 @@ export function App() {
             setAuthSuccess={setAuthSuccess}
             loginEmail={loginEmail}
             setLoginEmail={setLoginEmail}
-            onSendLoginOtp={handleSendLoginOtp}
-            onVerifyLoginOtp={handleVerifyLoginOtp}
+            loginPassword={loginPassword}
+            setLoginPassword={setLoginPassword}
+            onLogin={handleLogin}
+            onQuickDemoLogin={handleQuickDemoLogin}
             signupRole={signupRole}
             setSignupRole={setSignupRole}
             signupName={signupName}
             setSignupName={setSignupName}
             signupEmail={signupEmail}
             setSignupEmail={setSignupEmail}
+            signupPassword={signupPassword}
+            setSignupPassword={setSignupPassword}
             signupCampus={signupCampus}
             setSignupCampus={setSignupCampus}
             signupEnrollment={signupEnrollment}
@@ -928,15 +847,7 @@ export function App() {
             setEndYear={setEndYear}
             signupDeptId={signupDeptId}
             setSignupDeptId={setSignupDeptId}
-            onSendSignupOtp={handleSendSignupOtp}
-            onVerifySignupOtp={handleVerifySignupOtp}
-            otpInput={otpInput}
-            setOtpInput={setOtpInput}
-            otpEmail={otpEmail}
-            activeDevOtp={activeDevOtp}
-            otpCountdown={otpCountdown}
-            resendCooldown={resendCooldown}
-            onSwitchPersona={switchPersona}
+            onSignup={handleSignup}
             onLogout={handleLogout}
           />
         </main>

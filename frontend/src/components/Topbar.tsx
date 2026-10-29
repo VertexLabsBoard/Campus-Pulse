@@ -55,10 +55,10 @@ export function Topbar({
           type="button"
           className="topbar-auth-btn"
           onClick={onOpenAuth}
-          title="Amity University OTP Portal & Fast-Pass"
+          title="Campus Pulse Demo Authentication Portal"
         >
           <KeyRound size={14} color="var(--gold-hover)" />
-          <span>{currentUser ? `${currentUser.name.split(' ')[0]} (${currentUser.role})` : 'Amity Auth'}</span>
+          <span>{currentUser ? `${currentUser.name.split(' ')[0]} (${currentUser.role})` : 'Demo Sign In'}</span>
           {currentUser?.enrollmentNo && (
             <span className="topbar-enrollment-tag">{currentUser.enrollmentNo}</span>
           )}
